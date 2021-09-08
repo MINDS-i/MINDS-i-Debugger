@@ -260,7 +260,7 @@ Rover output control values.
 typedef struct {
 	s16 speed;
 	u8 steering;
-}NavigationMsg_t;
+}ControlMsg_t;
 ```
 
 | Byte Offset | Name | Description | 
@@ -288,8 +288,8 @@ typedef struct {
 | ------------ | ------------- | ------------- |
 | 4-7 | latStart | Previous waypoint latitude used for creating path (deg). Map `-(2^31-1)..(2^31-1) to +/- 90`, resolution ~42 nano degrees |
 | 8-11 | lonStart | Previous waypoint longitude used for creating path (deg). Map `-(2^31-1)..(2^31-1) to +/- 180`, resolution ~84 nano degrees |
-| 12-15 | latIntermediate | Temporary target latitude calculated by line gravity (deg). Map `-(2^31-1)..(2^31-1) to +/- 90`, resolution ~42 nano degrees |
-| 16-19 | lonIntermediate | Temporary target longitude calculated by line gravity (deg). Map `-(2^31-1)..(2^31-1) to +/- 180`, resolution ~84 nano degrees |
+| 12-15 | latIntermediate | Temporary target latitude calculated by line gravity (deg). Map `-(2^31-1)..(2^31-1) to +/- 90`, resolution ~42 nano degrees. Zero if currently unsued.|
+| 16-19 | lonIntermediate | Temporary target longitude calculated by line gravity (deg). Map `-(2^31-1)..(2^31-1) to +/- 180`, resolution ~84 nano degrees. Zero if currently unsued. |
 | 20-23 | latTarget | Current goal waypoint latitude (deg). Map `-(2^31-1)..(2^31-1) to +/- 90`, resolution ~42 nano degrees |
 | 24-27 | lonTarget | Current goal waypoint longitude (deg). Map `-(2^31-1)..(2^31-1) to +/- 180`, resolution ~84 nano degrees |
 | 28-29 | pathHeading | Desired heading * 100 deg, range -18000..18000 representing -180.00 to 180.00 |
