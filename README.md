@@ -91,8 +91,12 @@ typedef struct {
 	char data[256];
 	u8 len;
 }LenString_t;
-```
 
+typedef struct {
+  int16_t minutes;
+  int32_t frac;
+}GpsAngle_t;
+```
 
 ## Message Definitions
 
@@ -102,17 +106,19 @@ Positioning information being provided by the GPS sensor.
 
 ```
 typedef struct {
-	s32 latitude;
-	s32 longitude;
+	GpsAngle_t latitude;
+	GpsAngle_t longitude;
 	u16 altitude;
 }RawPositionMsg_t;
 ```
 
 | Byte Offset | Name | Description | 
 | ------------ | ------------- | ------------- |
-| 4-7 | latitude | GPS reciever reported latitude (deg). Map `-(2^31-1)..(2^31-1) to +/- 90`, resolution ~42 nano degrees |
-| 8-11 | longitude | GPS reciever reported longitude (deg). Map `-(2^31-1)..(2^31-1) to +/- 180`, resolution ~84 nano degrees |
-| 12-13 | altitude | GPS reciever reported altitude (meters). Map `0..(2^16-1) to - 900..19000`, resolution ~0.3m |
+| 4-5 | latitude_minutes | GPS reciever reported latitude (degrees and nondecimal minutes).  Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 6-9 | latitude_frac | GPS reciever reported latitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 10-11 | longitude_minutes | GPS reciever reported longitude (degrees and nondecimal minutes).  Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 12-15 | longitude_frac | GPS reciever reported longitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 16-17 | altitude | GPS reciever reported altitude (meters). Map `0..(2^16-1) to - 900..19000`, resolution ~0.3m |
 
 #### Extrapolated Position Message (0x11)
 
@@ -120,16 +126,18 @@ Position information created through calculation rather than sensed directly.
 
 ```
 typedef struct {
-	s32 latitude;
-	s32 longitude;
+	GpsAngle_t latitude;
+	GpsAngle_t longitude;
 	u16 altitude;
 }ExtrapolatedPositionMsg_t;
 ```
 
 | Byte Offset | Name | Description | 
 | ------------ | ------------- | ------------- |
-| 4-7 | latitude | Latitude extraploated between GPS readings. Map `-(2^31-1)..(2^31-1) to +/- 90`, resolution ~42 nano degrees |
-| 8-11 | longitude | Longitude extraploated between GPS readings. Map `-(2^31-1)..(2^31-1) to +/- 180`, resolution ~84 nano degrees |
+| 4-5 | latitude_minutes | GPS reciever reported latitude (degrees and nondecimal minutes).  Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 6-9 | latitude_frac | GPS reciever reported latitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 10-11 | longitude_minutes | GPS reciever reported longitude (degrees and nondecimal minutes).  Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 12-15 | longitude_frac | GPS reciever reported longitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
 | 12-13 | altitude | Altitude extraploated between GPS readings (meters). Map `0..(2^16-1) to - 900..19000`, resolution ~0.3m |
 
 #### Orientation Message (0x20)
@@ -274,25 +282,31 @@ Variables used to calculate control for waypoint navigation.
 
 ```
 typedef struct {
-	s32 latStart;
-	s32 lonStart;
-	s32 latIntermediate;
-	s32 lonIntermediate;
-	s32 latTarget;
-	s32 lonTarget;
+	GpsAngle_t latStart;
+	GpsAngle_t lonStart;
+	GpsAngle_t latIntermediate;
+	GpsAngle_t lonIntermediate;
+	GpsAngle_t latTarget;
+	GpsAngle_t lonTarget;
 	s16 pathHeading;
 }WaypointMsg_t;
 ```
 
 | Byte Offset | Name | Description | 
 | ------------ | ------------- | ------------- |
-| 4-7 | latStart | Previous waypoint latitude used for creating path (deg). Map `-(2^31-1)..(2^31-1) to +/- 90`, resolution ~42 nano degrees |
-| 8-11 | lonStart | Previous waypoint longitude used for creating path (deg). Map `-(2^31-1)..(2^31-1) to +/- 180`, resolution ~84 nano degrees |
-| 12-15 | latIntermediate | Temporary target latitude calculated by line gravity (deg). Map `-(2^31-1)..(2^31-1) to +/- 90`, resolution ~42 nano degrees. Zero if currently unsued.|
-| 16-19 | lonIntermediate | Temporary target longitude calculated by line gravity (deg). Map `-(2^31-1)..(2^31-1) to +/- 180`, resolution ~84 nano degrees. Zero if currently unsued. |
-| 20-23 | latTarget | Current goal waypoint latitude (deg). Map `-(2^31-1)..(2^31-1) to +/- 90`, resolution ~42 nano degrees |
-| 24-27 | lonTarget | Current goal waypoint longitude (deg). Map `-(2^31-1)..(2^31-1) to +/- 180`, resolution ~84 nano degrees |
-| 28-29 | pathHeading | Desired heading * 100 deg, range -18000..18000 representing -180.00 to 180.00 |
+| 4-5 | latStart_minutes | Previous waypoint latitude used for creating path (degrees and nondecimal minutes).  Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 6-9 | latStart_frac | Previous waypoint latitude used for creating path (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 10-11 | lonStart_minutes | Previous waypoint longitude used for creating path (degrees and nondecimal minutes).  Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 12-15 | lonStart_frac | Previous waypoint longitude used for creating path (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 16-17 | latIntermediate_minutes | Temporary target latitude calculated by line gravity (degrees and nondecimal minutes).  Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 18-21 | latIntermediate_frac | Temporary target latitude calculated by line gravity (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 22-23 | lonIntermediate_minutes | Temporary target longitude calculated by line gravity (degrees and nondecimal minutes).  Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 24-27 | lonIntermediate_frac | Temporary target longitude calculated by line gravity (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 28-29 | latTarget_minutes | Current goal waypoint latitude.  Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 30-33 | latTarget_frac | Current goal waypoint latitude. Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 34-35 | lonTarget_minutes | Current goal waypoint longitude (degrees and nondecimal minutes).  Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 36-39 | lonTarget_frac | Current goal waypoint longitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 40-41 | pathHeading | Desired heading * 100 deg, range -18000..18000 representing -180.00 to 180.00 |
 
 #### ASCII Message (0x90)
 
