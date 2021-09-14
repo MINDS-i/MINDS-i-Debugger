@@ -17,11 +17,12 @@
 #define NavigationMsgs_h
 
 #include "Arduino.h"
+#include "Util.h"
 
 # define CONTROL_MSG_ID 0x80
 # define CONTROL_MSG_LEN 3
 # define WAYPOINT_MSG_ID 0x81
-# define WAYPOINT_MSG_LEN 26
+# define WAYPOINT_MSG_LEN 38
 
 typedef struct {
     int16_t speed;
@@ -29,12 +30,12 @@ typedef struct {
 }ControlMsg_t;
 
 typedef struct {
-    int32_t latStart;
-    int32_t lonStart;
-    int32_t latIntermediate;
-    int32_t lonIntermediate;
-    int32_t latTarget;
-    int32_t lonTarget;
+    GpsAngle_t latStart;
+    GpsAngle_t lonStart;
+    GpsAngle_t latIntermediate;
+    GpsAngle_t lonIntermediate;
+    GpsAngle_t latTarget;
+    GpsAngle_t lonTarget;
     int16_t pathHeading;
 }WaypointMsg_t;
 

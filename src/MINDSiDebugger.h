@@ -51,6 +51,7 @@ class MINDSiDebugger {
     int32_t lat_float_to_int32(float lat);
     int32_t lon_float_to_int32(float lon);
     uint16_t alt_float_to_uint16(float alt);
+    int32_t frac_float_to_int32(float frac);
 
   private:
 };

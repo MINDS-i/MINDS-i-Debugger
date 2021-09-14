@@ -37,6 +37,11 @@ int32_t MINDSiDebugger::lon_float_to_int32(float lon)
   return (int32_t)(lon_conv_factor * lon);
 }
 
+int32_t MINDSiDebugger::frac_float_to_int32(float frac)
+{
+  return (int32_t)(round(100000 * frac));
+}
+
 uint16_t MINDSiDebugger::alt_float_to_uint16(float alt)
 {
   if (alt < -900)

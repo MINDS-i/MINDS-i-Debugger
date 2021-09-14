@@ -17,21 +17,22 @@
 #define PositionMsgs_h
 
 #include "Arduino.h"
+#include "Util.h"
 
 # define RAW_POSITION_ID 0x10
-# define RAW_POSITION_MSG_LEN 10
+# define RAW_POSITION_MSG_LEN 14
 # define EXTRAPOLATED_POSITION_ID 0x11
-# define EXTRAPLOATED_POSITION_MSG_LEN 10
+# define EXTRAPLOATED_POSITION_MSG_LEN 14
 
 typedef struct {
-    int32_t latitude;
-    int32_t longitude;
+    GpsAngle_t latitude;
+    GpsAngle_t longitude;
     uint16_t altitude;
 }RawPositionMsg_t;
 
 typedef struct {
-    int32_t latitude;
-    int32_t longitude;
+    GpsAngle_t latitude;
+    GpsAngle_t longitude;
     uint16_t altitude;
 }ExtrapolatedPositionMsg_t;
 

@@ -67,6 +67,11 @@ typedef struct {
   uint8_t len;
 }LenString_t;
 
+typedef struct {
+  int16_t minutes;
+  uint32_t frac;
+}GpsAngle_t;
+
 void calc_checksum(uint8_t* ogi_cmd, uint8_t len);
 
 #endif

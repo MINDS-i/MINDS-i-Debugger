@@ -16,7 +16,6 @@
 #include "PositionMsgs.h"
 #include "Arduino.h"
 #include "MINDSiDebugger.h"
-#include "Util.h"
 
 uint8_t MINDSiDebugger::send(RawPositionMsg_t msg)
 {
@@ -39,20 +38,24 @@ uint8_t MINDSiDebugger::send(RawPositionMsg_t msg)
     output[3] = RAW_POSITION_ID;
 
     // lat
-	output[4] = msg.latitude & 0xFF;
-	output[5] = msg.latitude >> 8;
-	output[6] = msg.latitude >> 16;
-	output[7] = msg.latitude >> 24;
+	output[4] = msg.latitude.minutes & 0xFF;
+	output[5] = msg.latitude.minutes >> 8;
+	output[6] = msg.latitude.frac & 0xFF;
+	output[7] = msg.latitude.frac >> 8;
+	output[8] = msg.latitude.frac >> 16;
+	output[9] = msg.latitude.frac >> 24;
 
     // lon
-	output[8] = msg.longitude & 0xFF;
-	output[9] = msg.longitude >> 8;
-	output[10] = msg.longitude >> 16;
-	output[11] = msg.longitude >> 24;
+	output[10] = msg.longitude.minutes & 0xFF;
+	output[11] = msg.longitude.minutes >> 8;
+	output[12] = msg.longitude.frac & 0xFF;
+	output[13] = msg.longitude.frac >> 8;
+	output[14] = msg.longitude.frac >> 16;
+	output[15] = msg.longitude.frac >> 24;
 
     // alt
-	output[12] = msg.altitude & 0xFF;
-	output[13] = msg.altitude >> 8;
+	output[16] = msg.altitude & 0xFF;
+	output[17] = msg.altitude >> 8;
 
     //checksum
     calc_checksum(output,RAW_POSITION_MSG_LEN + 4);
@@ -85,20 +88,24 @@ uint8_t MINDSiDebugger::send(ExtrapolatedPositionMsg_t msg)
     output[3] = EXTRAPOLATED_POSITION_ID;
 
     // lat
-	output[4] = msg.latitude & 0xFF;
-	output[5] = msg.latitude >> 8;
-	output[6] = msg.latitude >> 16;
-	output[7] = msg.latitude >> 24;
+	output[4] = msg.latitude.minutes & 0xFF;
+	output[5] = msg.latitude.minutes >> 8;
+	output[6] = msg.latitude.frac & 0xFF;
+	output[7] = msg.latitude.frac >> 8;
+	output[8] = msg.latitude.frac >> 16;
+	output[9] = msg.latitude.frac >> 24;
 
     // lon
-	output[8] = msg.longitude & 0xFF;
-	output[9] = msg.longitude >> 8;
-	output[10] = msg.longitude >> 16;
-	output[11] = msg.longitude >> 24;
+	output[10] = msg.longitude.minutes & 0xFF;
+	output[11] = msg.longitude.minutes >> 8;
+	output[12] = msg.longitude.frac & 0xFF;
+	output[13] = msg.longitude.frac >> 8;
+	output[14] = msg.longitude.frac >> 16;
+	output[15] = msg.longitude.frac >> 24;
 
     // alt
-	output[12] = msg.altitude & 0xFF;
-	output[13] = msg.altitude >> 8;
+	output[16] = msg.altitude & 0xFF;
+	output[17] = msg.altitude >> 8;
 
     //checksum
     calc_checksum(output,EXTRAPLOATED_POSITION_MSG_LEN + 4);

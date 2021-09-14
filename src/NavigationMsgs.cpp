@@ -16,7 +16,6 @@
 #include "NavigationMsgs.h" 
 #include "Arduino.h"
 #include "MINDSiDebugger.h"
-#include "Util.h"
 
 uint8_t MINDSiDebugger::send(ControlMsg_t msg)
 {
@@ -76,44 +75,56 @@ uint8_t MINDSiDebugger::send(WaypointMsg_t msg)
     output[3] = WAYPOINT_MSG_ID;
 
     // lat start (generally previously achived waypoint)
-	output[4] = msg.latStart & 0xFF;
-	output[5] = msg.latStart >> 8;
-	output[6] = msg.latStart >> 16;
-	output[7] = msg.latStart >> 24;
+	output[4] = msg.latStart.minutes & 0xFF;
+	output[5] = msg.latStart.minutes >> 8;
+	output[6] = msg.latStart.frac & 0xFF;
+	output[7] = msg.latStart.frac >> 8;
+	output[8] = msg.latStart.frac >> 16;
+	output[9] = msg.latStart.frac >> 24;
 
     // lon start (generally previously achived waypoint)
-	output[8] = msg.lonStart & 0xFF;
-	output[9] = msg.lonStart >> 8;
-	output[10] = msg.lonStart >> 16;
-	output[11] = msg.lonStart >> 24;
+	output[10] = msg.lonStart.minutes & 0xFF;
+	output[11] = msg.lonStart.minutes >> 8;
+	output[12] = msg.lonStart.frac & 0xFF;
+	output[13] = msg.lonStart.frac >> 8;
+	output[14] = msg.lonStart.frac >> 16;
+	output[15] = msg.lonStart.frac >> 24;
 
     // lat intermediate (generally produced by line-gravity)
-	output[12] = msg.latIntermediate & 0xFF;
-	output[13] = msg.latIntermediate >> 8;
-	output[14] = msg.latIntermediate >> 16;
-	output[15] = msg.latIntermediate >> 24;
+	output[16] = msg.latIntermediate.minutes & 0xFF;
+	output[17] = msg.latIntermediate.minutes >> 8;
+	output[18] = msg.latIntermediate.frac & 0xFF;
+	output[19] = msg.latIntermediate.frac >> 8;
+	output[20] = msg.latIntermediate.frac >> 16;
+	output[21] = msg.latIntermediate.frac >> 24;
 
     // lon start (generally produced by line-gravity)
-	output[16] = msg.lonIntermediate & 0xFF;
-	output[17] = msg.lonIntermediate >> 8;
-	output[18] = msg.lonIntermediate >> 16;
-	output[19] = msg.lonIntermediate >> 24;
+	output[22] = msg.lonIntermediate.minutes & 0xFF;
+	output[23] = msg.lonIntermediate.minutes >> 8;
+	output[24] = msg.lonIntermediate.frac & 0xFF;
+	output[25] = msg.lonIntermediate.frac >> 8;
+	output[26] = msg.lonIntermediate.frac >> 16;
+	output[27] = msg.lonIntermediate.frac >> 24;
 
     // lat start (generally the next waypoint)
-	output[20] = msg.latTarget & 0xFF;
-	output[21] = msg.latTarget >> 8;
-	output[22] = msg.latTarget >> 16;
-	output[23] = msg.latTarget >> 24;
+	output[28] = msg.latTarget.minutes & 0xFF;
+	output[29] = msg.latTarget.minutes >> 8;
+	output[30] = msg.latTarget.frac & 0xFF;
+	output[31] = msg.latTarget.frac >> 8;
+	output[32] = msg.latTarget.frac >> 16;
+	output[33] = msg.latTarget.frac >> 24;
 
     // lon start (generally the next waypoint)
-	output[24] = msg.lonTarget & 0xFF;
-	output[25] = msg.lonTarget >> 8;
-	output[26] = msg.lonTarget >> 16;
-	output[27] = msg.lonTarget >> 24;
+	output[34] = msg.lonTarget.minutes & 0xFF;
+	output[35] = msg.lonTarget.minutes >> 8;
+	output[36] = msg.lonTarget.frac & 0xFF;
+	output[37] = msg.lonTarget.frac >> 8;
+	output[38] = msg.lonTarget.frac >> 16;
+	output[39] = msg.lonTarget.frac >> 24;
 
     // path(desired) heading
-	output[28] = msg.pathHeading & 0xFF;
-	output[29] = msg.pathHeading >> 8;
+	output[40] = msg.pathHeading & 0xFF;
+	output[41] = msg.pathHeading >> 8;
 
     //checksum
     calc_checksum(output,WAYPOINT_MSG_LEN + 4);
