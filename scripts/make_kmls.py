@@ -140,7 +140,7 @@ def main():
                     cnt += 1
                     old_lat = words[1]
                     old_lon = words[2]
-                elif words[0] == '32':
+                elif words[0] == '32' and old_lat != '' and old_lon != '':
                     cnt4 += 1
                     pnt = kml_rover_heading_pts.newpoint(name="P"+str(cnt)+"_"+str(cnt4), coords=[(float(old_lon),float(old_lat))])
                     pnt.style.iconstyle.icon.href = 'http://maps.google.com/mapfiles/kml/shapes/arrow.png'
