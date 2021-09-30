@@ -56,7 +56,7 @@ def calc_crc(crc_buff):
     return crc
 
 def gps_ang_to_float(min,frac):
-    deg = np.uint16(min/60.0)
+    deg = np.int16(min/60.0)
     min_deg = (min-(deg*60.0)+frac/100000.0)/60.0
     return deg+min_deg;        
 
