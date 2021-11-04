@@ -5,7 +5,82 @@ This library contains code for providing logging and debugging msgs on a dedicat
 
 ## Usage
 
-To be filled out.
+#### Radio Module Configuration
+
+The debugger leverages a dedicated serial port on the APM.  The typical usage requires a second pair of radio modules.
+
+The radio modules must be configure in a way to prevent interference with the primary radio modules used for Dashboard.  This can be done by selecting 
+a radio pair on an entirely seperate frequency range (900Mhz and 2.4GHz for example). Alternativly, radio modules on the same frequecy range can be 
+configured to use a non-overlaping subset of the frequency.  For example, the Dashboard radio modules could be configured to operate in the range 
+915.0 MHz to 921.5 MHz and the debugger radio modules could be configured to operate in the range 922.0 MHz to 928.0 MHz.  If subdividing a frequency 
+it is suggested that you half the number of channels to 25.
+
+Additionally, the default baud rate for the debugger's serial connection is 115200.  This must also be configured for both debugger radio modules.
+
+Lastly, it's generally good practice to ensure that the NETID values are set so that matching modules have the same NETID but don't conflict with other
+radio module pairs.
+
+A functional configuration for a subdivided frequecy is:
+
+Dashboard Telemetry Radio Modules -
+
+| ID | Name | Value | 
+| ------------ | ------------- | ------------ |
+| 0	| FORMAT | 25 |
+| 1 | SERIAL_SPEED | 57 |
+| 2	| AIR_SPEED | 64 |
+| 3	| NETID	| 26 |
+| 4	| TXPOWER | 14 |
+| 5	| ECC | 1 |
+| 6	| MAVLINK | 1 |
+| 7	| OPPRESEND | 1 |
+| 8	| MIN_FREQ | 915000 |
+| 9	| MAX_FREQ | 921500 |
+| 10 | NUM_CHANNELS | 25 |
+| 11 | DUTY_CYCLE | 100 |
+| 12 | LBT_RSSI | 0 |
+| 13 | MANCHESTER | 0 |
+| 14 | RTSCTS | 0 |
+| 15 | MAX_WINDOW | 131 |
+
+Debugger Radio Modules -
+
+| ID | Name | Value | 
+| ------------ | ------------- | ------------ |
+| 0	| FORMAT | 25 |
+| 1 | SERIAL_SPEED | 115 |
+| 2	| AIR_SPEED | 128 |
+| 3	| NETID	| 24 |
+| 4	| TXPOWER | 14 |
+| 5	| ECC | 0 |
+| 6	| MAVLINK | 0 |
+| 7	| OPPRESEND | 1 |
+| 8	| MIN_FREQ | 922000 |
+| 9	| MAX_FREQ | 928000 |
+| 10 | NUM_CHANNELS | 25 |
+| 11 | DUTY_CYCLE | 100 |
+| 12 | LBT_RSSI | 0 |
+| 13 | MANCHESTER | 0 |
+| 14 | RTSCTS | 0 |
+| 15 | MAX_WINDOW | 131 |
+
+#### Enabling Core Debug Messages
+
+Core debug messages already exist within the Minds-i-Drone source code for the 6x6 rover.  To enable outputting these messages 
+the below line of code must be uncommented in the RoboMagellan6x6.ino file:
+
+```
+    #define M_DEBUG  //comment out to disable debugger
+```
+
+Additional message outputs can be added to the code to meet individual needs.  The available message types and formats can be found later in this document.
+
+It should be noted that these messages are sent as binary data to ensure maximum throughput over the wireless link.  As such, data recieved from the 
+debugger radio must be unencoded before it is human readable.  A python script is provided for unencoding live or stored data.  Details can be found here: 
+[Decoding](scripts/README.md)
+
+Lastly, it is often benifical to view debug file data as graphs or plotted on maps like Google Earth.  Several scripts are provided for this purpose.  Details
+can be found here: [Decoding](scripts/README.md)
 
 ## Packet Structure
 
