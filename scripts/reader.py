@@ -194,7 +194,7 @@ def process_msg(buf,header_loc,outfile):
             lonIntermediate_frac = unpack('i',pack('BBBB', data[20], data[21], data[22], data[23]))
             latTarget_min = unpack('h',pack('BB', data[24], data[25]))
             latTarget_frac = unpack('i',pack('BBBB', data[26], data[27], data[28], data[29]))
-            lonTarget_min = unpack('h',pack('BB', data[30], data3[1]))
+            lonTarget_min = unpack('h',pack('BB', data[30], data[31]))
             lonTarget_frac = unpack('i',pack('BBBB', data[32], data[33], data[34], data[35]))
             pathHeading = unpack('h',pack('BB', data[36], data[37]))
             print("Waypoint Msg: latStart = {:0.7f}, lonStart = {:0.7f}, latInter = {:0.7f}, lonInter = {:0.7f}, latTarget = {:0.7f}, lonTarget = {:0.7f}, pathHead = {:0.2f}\n".format(gps_ang_to_float(latStart_min[0],latStart_frac[0]), gps_ang_to_float(lonStart_min[0],lonStart_frac[0]), gps_ang_to_float(latIntermediate_min[0],latIntermediate_frac[0]), gps_ang_to_float(lonIntermediate_min[0],lonIntermediate_frac[0]), gps_ang_to_float(latTarget_min[0],latTarget_frac[0]), gps_ang_to_float(lonTarget_min[0],lonTarget_frac[0]), pathHeading[0]/100.0),end = '')
