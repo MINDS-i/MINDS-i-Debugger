@@ -3,6 +3,7 @@ import os.path
 import time
 import serial
 import numpy as np
+from struct import pack,unpack
 
 alt_conv_factor = 3.2932160
 
@@ -56,7 +57,7 @@ def calc_crc(crc_buff):
     return crc
 
 def gps_ang_to_float(min,frac):
-    deg = np.uint16(min/60.0)
+    deg = np.int16(min/60.0)
     min_deg = (min-(deg*60.0)+frac/100000.0)/60.0
     return deg+min_deg;        
 
@@ -113,91 +114,91 @@ def process_msg(buf,header_loc,outfile):
     if crc == calc_crc(crc_buff):
         # process message by type
         if id == int('0x10',16): # Raw Position Msg type
-            lat_min = data[0] | np.left_shift(data[1],8)
-            lat_frac = data[2] | np.left_shift(data[3],8) | np.left_shift(data[4],16) | np.left_shift(data[5],24)
-            lon_min = data[6] | np.left_shift(data[7],8)
-            lon_frac = data[8] | np.left_shift(data[9],8) | np.left_shift(data[10],16) | np.left_shift(data[11],24)
-            alt = data[12] | np.left_shift(data[13],8)  
-            print("Position (Raw) Msg: Lat = {:0.7f}, Lon = {:0.7f}, Alt = {:0.2f}\n".format(gps_ang_to_float(lat_min,lat_frac), gps_ang_to_float(lon_min,lon_frac), (alt/alt_conv_factor)-900),end = '')
-            outfile.write("{:d}:{:0.7f}:{:0.7f}:{:0.2f}\n".format(id, gps_ang_to_float(lat_min,lat_frac), gps_ang_to_float(lon_min,lon_frac), (alt/alt_conv_factor)-900))
+            lat_min = unpack('h',pack('BB', data[0], data[1]))
+            lat_frac = unpack('i',pack('BBBB', data[2], data[3], data[4], data[5]))
+            lon_min = unpack('h',pack('BB', data[6], data[7]))
+            lon_frac = unpack('i',pack('BBBB', data[8], data[9], data[10], data[11]))
+            alt = unpack('H',pack('BB', data[12], data[13]))  
+            print("Position (Raw) Msg: Lat = {:0.7f}, Lon = {:0.7f}, Alt = {:0.2f}\n".format(gps_ang_to_float(lat_min[0],lat_frac[0]), gps_ang_to_float(lon_min[0],lon_frac[0]), (alt[0]/alt_conv_factor)-900),end = '')
+            outfile.write("{:d}:{:0.7f}:{:0.7f}:{:0.2f}\n".format(id, gps_ang_to_float(lat_min[0],lat_frac[0]), gps_ang_to_float(lon_min[0],lon_frac[0]), (alt[0]/alt_conv_factor)-900))
         elif id == int('0x11',16): #Extrapolated Position Msg type
-            lat_min = data[0] | np.left_shift(data[1],8)
-            lat_frac = data[2] | np.left_shift(data[3],8) | np.left_shift(data[4],16) | np.left_shift(data[5],24)
-            lon_min = data[6] | np.left_shift(data[7],8)
-            lon_frac = data[8] | np.left_shift(data[9],8) | np.left_shift(data[10],16) | np.left_shift(data[11],24)
-            alt = data[12] | np.left_shift(data[13],8)  
-            print("Position (Extrapolated) Msg: Lat = {:0.7f}, Lon = {:0.7f}, Alt = {:0.2f}\n".format(gps_ang_to_float(lat_min,lat_frac), gps_ang_to_float(lon_min,lon_frac), (alt/alt_conv_factor)-900),end = '')
-            outfile.write("{:d}:{:0.7f}:{:0.7f}:{:0.2f}\n".format(id, gps_ang_to_float(lat_min,lat_frac), gps_ang_to_float(lon_min,lon_frac), (alt/alt_conv_factor)-900))
+            lat_min = unpack('h',pack('BB', data[0], data[1]))
+            lat_frac = unpack('i',pack('BBBB', data[2], data[3], data[4], data[5]))
+            lon_min = unpack('h',pack('BB', data[6], data[7]))
+            lon_frac = unpack('i',pack('BBBB', data[8], data[9], data[10], data[11]))
+            alt = unpack('H',pack('BB', data[12], data[13]))  
+            print("Position (Extrapolated) Msg: Lat = {:0.7f}, Lon = {:0.7f}, Alt = {:0.2f}\n".format(gps_ang_to_float(lat_min[0],lat_frac[0]), gps_ang_to_float(lon_min[0],lon_frac[0]), (alt[0]/alt_conv_factor)-900),end = '')
+            outfile.write("{:d}:{:0.7f}:{:0.7f}:{:0.2f}\n".format(id, gps_ang_to_float(lat_min[0],lat_frac[0]), gps_ang_to_float(lon_min[0],lon_frac[0]), (alt[0]/alt_conv_factor)-900))
         elif id == int('0x20',16): #Orientation Msg type
-            heading = data[0] | np.left_shift(data[1],8)
-            roll = data[2] | np.left_shift(data[3],8)
-            pitch = data[4] | np.left_shift(data[5],8)  
-            print("Orientation Msg: Heading = {:0.2f}, Roll = {:0.2f}, Pitch = {:0.2f}\n".format(heading/100.0, roll/100.0, pitch/100.0),end = '')                
-            outfile.write("{:d}:{:0.2f}:{:0.2f}:{:0.2f}\n".format(id, heading/100.0, roll/100.0, pitch/100.0))
+            heading = unpack('h',pack('BB', data[0], data[1]))
+            roll = unpack('h',pack('BB', data[2], data[3]))
+            pitch = unpack('h',pack('BB', data[4], data[5]))  
+            print("Orientation Msg: Heading = {:0.2f}, Roll = {:0.2f}, Pitch = {:0.2f}\n".format(heading[0]/100.0, roll[0]/100.0, pitch[0]/100.0),end = '')                
+            outfile.write("{:d}:{:0.2f}:{:0.2f}:{:0.2f}\n".format(id, heading[0]/100.0, roll[0]/100.0, pitch[0]/100.0))
         elif id == int('0x30',16): #Radio Msg type
-            speed = data[0] | np.left_shift(data[1],8)
-            steering = data[2]
-            print("Radio Msg: Speed = {:0.2f}, steering = {}\n".format(speed/100.0, steering),end = '')                
-            outfile.write("{:d}:{:0.2f}:{}\n".format(id, speed/100.0, steering))
+            speed = unpack('h',pack('BB', data[0], data[1]))
+            steering = unpack('b',pack('B', data[2]))
+            print("Radio Msg: Speed = {:0.2f}, steering = {}\n".format(speed[0]/100.0, steering[0]),end = '')                
+            outfile.write("{:d}:{:0.2f}:{}\n".format(id, speed[0]/100.0, steering[0]))
         elif id == int('0x40',16): #IMU Msg type
-            euler_x = data[0] | np.left_shift(data[1],8)
-            euler_y = data[2] | np.left_shift(data[3],8)
-            euler_z = data[4] | np.left_shift(data[5],8)
-            acc_x = data[6] | np.left_shift(data[7],8)
-            acc_y = data[8] | np.left_shift(data[9],8)
-            acc_z = data[10] | np.left_shift(data[11],8)
-            gyro_x = data[12] | np.left_shift(data[13],8)
-            gyro_y = data[14] | np.left_shift(data[15],8)
-            gyro_z = data[16] | np.left_shift(data[17],8)
-            print("IMU Msg: Eul_x = {:f}, Eul_y = {:f}, Eul_z = {:f}, Acc_x = {:f}, Acc_y = {:f}, Acc_z = {:f}, Gyr_x = {:f}, Gyr_y = {:f}, Gyr_z = {:f}\n".format(euler_x/10430.0,euler_y/10430.0,euler_z/10430.0,acc_x/8192.0,acc_y/8192.0,acc_z/8192.0,gyro_x/16.4,gyro_y/16.4,gyro_z/16.4),end = '')                
-            outfile.write("{:d}:{:f}:{:f}:{:f}:{:f}:{:f}:{:f}:{:f}:{:f}:{:f}\n".format(id, euler_x/10430.0,euler_y/10430.0,euler_z/10430.0,acc_x/8192.0,acc_y/8192.0,acc_z/8192.0,gyro_x/16.4,gyro_y/16.4,gyro_z/16.4))
+            euler_x = unpack('h',pack('BB', data[0], data[1]))
+            euler_y = unpack('h',pack('BB', data[2], data[3]))
+            euler_z = unpack('h',pack('BB', data[4], data[5]))
+            acc_x = unpack('h',pack('BB', data[6], data[7]))
+            acc_y = unpack('h',pack('BB', data[8], data[9]))
+            acc_z = unpack('h',pack('BB', data[10], data[11]))
+            gyro_x = unpack('h',pack('BB', data[12], data[13]))
+            gyro_y = unpack('h',pack('BB', data[14], data[15]))
+            gyro_z = unpack('h',pack('BB', data[16], data[17]))
+            print("IMU Msg: Eul_x = {:f}, Eul_y = {:f}, Eul_z = {:f}, Acc_x = {:f}, Acc_y = {:f}, Acc_z = {:f}, Gyr_x = {:f}, Gyr_y = {:f}, Gyr_z = {:f}\n".format(euler_x[0]/10430.0,euler_y[0]/10430.0,euler_z[0]/10430.0,acc_x[0]/8192.0,acc_y[0]/8192.0,acc_z[0]/8192.0,gyro_x[0]/16.4,gyro_y[0]/16.4,gyro_z[0]/16.4),end = '')                
+            outfile.write("{:d}:{:f}:{:f}:{:f}:{:f}:{:f}:{:f}:{:f}:{:f}:{:f}\n".format(id, euler_x[0]/10430.0,euler_y[0]/10430.0,euler_z[0]/10430.0,acc_x[0]/8192.0,acc_y[0]/8192.0,acc_z[0]/8192.0,gyro_x[0]/16.4,gyro_y[0]/16.4,gyro_z[0]/16.4))
         elif id == int('0x41',16): #Sonar Msg type
-            ping1 = data[0] | np.left_shift(data[1],8)
-            ping2 = data[2] | np.left_shift(data[3],8)
-            ping3 = data[4] | np.left_shift(data[5],8)
-            ping4 = data[6] | np.left_shift(data[7],8)
-            ping5 = data[8] | np.left_shift(data[9],8)
-            print("Sonar Msg: ping1 = {:d}, ping2 = {:d}, ping3 = {:d}, ping4 = {:d}, ping5 = {:d}\n".format(ping1,ping2,ping3,ping4,ping5),end = '')                
-            outfile.write("{:d}:{:d}:{:d}:{:d}:{:d}:{:d}\n".format(id, ping1,ping2,ping3,ping4,ping5))
+            ping1 = unpack('H',pack('BB', data[0], data[1]))
+            ping2 = unpack('H',pack('BB', data[2], data[3]))
+            ping3 = unpack('H',pack('BB', data[4], data[5]))
+            ping4 = unpack('H',pack('BB', data[6], data[7]))
+            ping5 = unpack('H',pack('BB', data[8], data[9]))
+            print("Sonar Msg: ping1 = {:d}, ping2 = {:d}, ping3 = {:d}, ping4 = {:d}, ping5 = {:d}\n".format(ping1[0],ping2[0],ping3[0],ping4[0],ping5[0]),end = '')                
+            outfile.write("{:d}:{:d}:{:d}:{:d}:{:d}:{:d}\n".format(id, ping1[0],ping2[0],ping3[0],ping4[0],ping5[0]))
         elif id == int('0x42',16): #Bumper Msg type
-            left = data[0]
-            right = data[1]
-            print("Bumper Msg: left = {:d}, right = {:d}\n".format(left,right))                
-            outfile.write("{:d}:{:d}:{:d}\n".format(id,left,right))
+            left = unpack('B',pack('B', data[0]))
+            right = unpack('B',pack('B', data[1]))
+            print("Bumper Msg: left = {:d}, right = {:d}\n".format(left[0],right[0]))                
+            outfile.write("{:d}:{:d}:{:d}\n".format(id,left[0],right[0]))
         elif id == int('0x60',16): #State Msg type
-            apmState = data[0]
-            driveState = data[1]
-            autoState = data[2]
-            autoFlag = data[3]
-            voltage = data[4]
-            amperage = data[5]
-            groundSpeed = data[6]
-            print("State Msg: apmState = {:d}, driveState = {:d}, autoState = {:d}, autoFlag = {:d}, voltage = {:0.2f}, amperage = {:0.2f}, groundSpeed = {:0.2f}\n".format(apmState, driveState, autoState, autoFlag, voltage/10.0, amperage/10.0, groundSpeed/10.0),end = '')
-            outfile.write("{:d}:{:d}:{:d}:{:d}:{:d}:{:0.2f}:{:0.2f}:{:0.2f}\n".format(id, apmState, driveState, autoState, autoFlag, voltage/10.0, amperage/10.0, groundSpeed/10.0))
+            apmState = unpack('b',pack('B', data[0]))
+            driveState = unpack('b',pack('B', data[1]))
+            autoState = unpack('b',pack('B', data[2]))
+            autoFlag = unpack('b',pack('B', data[3]))
+            voltage = unpack('b',pack('B', data[4]))
+            amperage = unpack('b',pack('B', data[5]))
+            groundSpeed = unpack('b',pack('B', data[6]))
+            print("State Msg: apmState = {:d}, driveState = {:d}, autoState = {:d}, autoFlag = {:d}, voltage = {:0.2f}, amperage = {:0.2f}, groundSpeed = {:0.2f}\n".format(apmState[0], driveState[0], autoState[0], autoFlag[0], voltage[0]/10.0, amperage[0]/10.0, groundSpeed[0]/10.0),end = '')
+            outfile.write("{:d}:{:d}:{:d}:{:d}:{:d}:{:0.2f}:{:0.2f}:{:0.2f}\n".format(id, apmState[0], driveState[0], autoState[0], autoFlag[0], voltage[0]/10.0, amperage[0]/10.0, groundSpeed[0]/10.0))
         elif id == int('0x70',16): #Configuration Msg type
             print("Configuration MSG recived (not defined)\n",end = '')                
             outfile.write("{:d}\n".format(id))
         elif id == int('0x80',16): #Control Msg type
-            speed = data[0] | np.left_shift(data[1],8)
-            steering = data[2]
-            print("Control Msg: Speed = {:0.2f}, steering = {}\n".format(speed/100.0, steering),end = '')
-            outfile.write("{:d}:{:0.2f}:{}\n".format(id, speed/100.0, steering))
+            speed = unpack('h',pack('BB', data[0], data[1]))
+            steering = unpack('B',pack('B', data[2]))
+            print("Control Msg: Speed = {:0.2f}, steering = {}\n".format(speed[0]/100.0, steering[0]),end = '')
+            outfile.write("{:d}:{:0.2f}:{}\n".format(id, speed[0]/100.0, steering[0]))
         elif id == int('0x81',16): #Waypoint Msg type
-            latStart_min = data[0] | np.left_shift(data[1],8)
-            latStart_frac = data[2] | np.left_shift(data[3],8) | np.left_shift(data[4],16) | np.left_shift(data[5],24)
-            lonStart_min = data[6] | np.left_shift(data[7],8)
-            lonStart_frac = data[8] | np.left_shift(data[9],8) | np.left_shift(data[10],16) | np.left_shift(data[11],24)
-            latIntermediate_min = data[12] | np.left_shift(data[13],8)
-            latIntermediate_frac = data[14] | np.left_shift(data[15],8) | np.left_shift(data[16],16) | np.left_shift(data[17],24)
-            lonIntermediate_min = data[18] | np.left_shift(data[19],8)
-            lonIntermediate_frac = data[20] | np.left_shift(data[21],8) | np.left_shift(data[22],16) | np.left_shift(data[23],24)
-            latTarget_min = data[24] | np.left_shift(data[25],8)
-            latTarget_frac = data[26] | np.left_shift(data[27],8) | np.left_shift(data[28],16) | np.left_shift(data[29],24)
-            lonTarget_min = data[30] | np.left_shift(data[31],8)
-            lonTarget_frac = data[32] | np.left_shift(data[33],8) | np.left_shift(data[34],16) | np.left_shift(data[35],24)
-            pathHeading = data[36] | np.left_shift(data[37],8)
-            print("Waypoint Msg: latStart = {:0.7f}, lonStart = {:0.7f}, latInter = {:0.7f}, lonInter = {:0.7f}, latTarget = {:0.7f}, lonTarget = {:0.7f}, pathHead = {:0.2f}\n".format(gps_ang_to_float(latStart_min,latStart_frac), gps_ang_to_float(lonStart_min,lonStart_frac), gps_ang_to_float(latIntermediate_min,latIntermediate_frac), gps_ang_to_float(lonIntermediate_min,lonIntermediate_frac), gps_ang_to_float(latTarget_min,latTarget_frac), gps_ang_to_float(lonTarget_min,lonTarget_frac), pathHeading/100.0),end = '')
-            outfile.write("{:d}:{:0.7f}:{:0.7f}:{:0.7f}:{:0.7f}:{:0.7f}:{:0.7f}:{:0.2f}\n".format(id, gps_ang_to_float(latStart_min,latStart_frac), gps_ang_to_float(lonStart_min,lonStart_frac), gps_ang_to_float(latIntermediate_min,latIntermediate_frac), gps_ang_to_float(lonIntermediate_min,lonIntermediate_frac), gps_ang_to_float(latTarget_min,latTarget_frac), gps_ang_to_float(lonTarget_min,lonTarget_frac), pathHeading/100.0))
+            latStart_min = unpack('h',pack('BB', data[0], data[1]))
+            latStart_frac = unpack('i',pack('BBBB', data[2], data[3], data[4], data[5]))
+            lonStart_min = unpack('h',pack('BB', data[6], data[7]))
+            lonStart_frac = unpack('i',pack('BBBB', data[8], data[9], data[10], data[11]))
+            latIntermediate_min = unpack('h',pack('BB', data[12], data[13]))
+            latIntermediate_frac = unpack('i',pack('BBBB', data[14], data[15], data[16], data[17]))
+            lonIntermediate_min = unpack('h',pack('BB', data[18], data[19]))
+            lonIntermediate_frac = unpack('i',pack('BBBB', data[20], data[21], data[22], data[23]))
+            latTarget_min = unpack('h',pack('BB', data[24], data[25]))
+            latTarget_frac = unpack('i',pack('BBBB', data[26], data[27], data[28], data[29]))
+            lonTarget_min = unpack('h',pack('BB', data[30], data[31]))
+            lonTarget_frac = unpack('i',pack('BBBB', data[32], data[33], data[34], data[35]))
+            pathHeading = unpack('h',pack('BB', data[36], data[37]))
+            print("Waypoint Msg: latStart = {:0.7f}, lonStart = {:0.7f}, latInter = {:0.7f}, lonInter = {:0.7f}, latTarget = {:0.7f}, lonTarget = {:0.7f}, pathHead = {:0.2f}\n".format(gps_ang_to_float(latStart_min[0],latStart_frac[0]), gps_ang_to_float(lonStart_min[0],lonStart_frac[0]), gps_ang_to_float(latIntermediate_min[0],latIntermediate_frac[0]), gps_ang_to_float(lonIntermediate_min[0],lonIntermediate_frac[0]), gps_ang_to_float(latTarget_min[0],latTarget_frac[0]), gps_ang_to_float(lonTarget_min[0],lonTarget_frac[0]), pathHeading[0]/100.0),end = '')
+            outfile.write("{:d}:{:0.7f}:{:0.7f}:{:0.7f}:{:0.7f}:{:0.7f}:{:0.7f}:{:0.2f}\n".format(id, gps_ang_to_float(latStart_min[0],latStart_frac[0]), gps_ang_to_float(lonStart_min[0],lonStart_frac[0]), gps_ang_to_float(latIntermediate_min[0],latIntermediate_frac[0]), gps_ang_to_float(lonIntermediate_min[0],lonIntermediate_frac[0]), gps_ang_to_float(latTarget_min[0],latTarget_frac[0]), gps_ang_to_float(lonTarget_min[0],lonTarget_frac[0]), pathHeading[0]/100.0))
         elif id == int('0x90',16): #ASCII Msg type
             ascii = data[:pkt_len-3]
             print("ASCII Msg: {0!s}\n".format(ascii),end = '')                
