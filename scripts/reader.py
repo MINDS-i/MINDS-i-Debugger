@@ -201,8 +201,8 @@ def process_msg(buf,header_loc,outfile):
             outfile.write("{:d}:{:0.7f}:{:0.7f}:{:0.7f}:{:0.7f}:{:0.7f}:{:0.7f}:{:0.2f}\n".format(id, gps_ang_to_float(latStart_min[0],latStart_frac[0]), gps_ang_to_float(lonStart_min[0],lonStart_frac[0]), gps_ang_to_float(latIntermediate_min[0],latIntermediate_frac[0]), gps_ang_to_float(lonIntermediate_min[0],lonIntermediate_frac[0]), gps_ang_to_float(latTarget_min[0],latTarget_frac[0]), gps_ang_to_float(lonTarget_min[0],lonTarget_frac[0]), pathHeading[0]/100.0))
         elif id == int('0x90',16): #ASCII Msg type
             ascii = data[:pkt_len-3]
-            print("ASCII Msg: {0!s}\n".format(ascii),end = '')                
-            outfile.write("{:d}:{!s}}\n".format(id, ascii))
+            print("ASCII Msg: {0!s}\n".format(ascii.decode()),end = '')
+            outfile.write("{:d}:{!s}\n".format(id, ascii.decode()))
         elif id == int('0xA0',16): #Version Msg type
             debug_major = data[0]
             debug_minor = data[1]
