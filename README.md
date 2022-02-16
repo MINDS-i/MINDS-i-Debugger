@@ -322,6 +322,17 @@ typedef struct {
 | ------------ | ------------- | ------------- |
 | 4-? | LenString_t | Struct of ASCII characters for temporary debugging msgs |
 
+Example:
+```
+#ifdef M_DEBUG
+	AsciiMsg_t msg;
+	String tst = "ASCII MSG Here";
+	msg.ascii.len = tst.length();
+	tst.toCharArray(msg.ascii.data,tst.length()+1);
+	debugger.send(msg);
+#endif
+```
+
 #### Version Message (0xA0)
 
 Version information
