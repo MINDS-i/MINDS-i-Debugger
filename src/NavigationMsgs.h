@@ -20,13 +20,19 @@
 #include "Util.h"
 
 # define CONTROL_MSG_ID 0x80
-# define CONTROL_MSG_LEN 3
+# define CONTROL_MSG_LEN 15
 # define WAYPOINT_MSG_ID 0x81
 # define WAYPOINT_MSG_LEN 38
 
 typedef struct {
     int16_t speed;
     uint8_t steering;
+    int16_t sc_steering;
+    int16_t true_steering;
+    int16_t k_crosstrack;
+    int16_t k_yaw;
+    int16_t heading_error;
+    int16_t crosstrack_error;
 }ControlMsg_t;
 
 typedef struct {

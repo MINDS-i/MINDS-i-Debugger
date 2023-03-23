@@ -43,6 +43,30 @@ uint8_t MINDSiDebugger::send(ControlMsg_t msg)
 	
     // steering
 	output[6] = msg.steering & 0xFF;
+
+    // steer controller
+	output[7] = msg.sc_steering & 0xFF;
+	output[8] = msg.sc_steering >> 8;
+
+    // true steer
+	output[9] = msg.true_steering & 0xFF;
+	output[10] = msg.true_steering >> 8;
+
+    // k_crosstrack
+	output[11] = msg.k_crosstrack & 0xFF;
+	output[12] = msg.k_crosstrack >> 8;
+
+    // k_yaw
+	output[13] = msg.k_yaw & 0xFF;
+	output[14] = msg.k_yaw >> 8;
+
+    // heading
+	output[15] = msg.heading_error & 0xFF;
+	output[16] = msg.heading_error >> 8;
+
+    // heading error
+	output[17] = msg.crosstrack_error & 0xFF;
+	output[18] = msg.crosstrack_error >> 8;
 	
     //checksum
     calc_checksum(output,CONTROL_MSG_LEN + 4);

@@ -38,41 +38,63 @@ uint8_t MINDSiDebugger::send(ImuMsg_t msg)
     // msg id
     output[3] = IMU_MSG_ID;
 
+    // ms
+    output[4] = msg.ms & 0xFF;
+    output[5] = (msg.ms >> 8) & 0xFF;
+    output[6] = (msg.ms >> 16) & 0xFF;
+    output[7] = (msg.ms >> 24) & 0xFF;
+
     // euler x
-	output[4] = msg.euler_x & 0xFF;
-	output[5] = msg.euler_x >> 8;
+	output[8] = msg.euler_x & 0xFF;
+	output[9] = msg.euler_x >> 8;
 
     // euler y
-	output[6] = msg.euler_y & 0xFF;
-	output[7] = msg.euler_y >> 8;
+	output[10] = msg.euler_y & 0xFF;
+	output[11] = msg.euler_y >> 8;
 
     // euler z
-	output[8] = msg.euler_z & 0xFF;
-	output[9] = msg.euler_z >> 8;
+	output[12] = msg.euler_z & 0xFF;
+	output[13] = msg.euler_z >> 8;
 
     // acc x
-	output[10] = msg.acc_x & 0xFF;
-	output[11] = msg.acc_x >> 8;
+	output[14] = msg.acc_x & 0xFF;
+	output[15] = msg.acc_x >> 8;
 
     // acc y
-	output[12] = msg.acc_y & 0xFF;
-	output[13] = msg.acc_y >> 8;
+	output[16] = msg.acc_y & 0xFF;
+	output[17] = msg.acc_y >> 8;
 
     // acc z
-	output[14] = msg.acc_z & 0xFF;
-	output[15] = msg.acc_z >> 8;
+	output[18] = msg.acc_z & 0xFF;
+	output[19] = msg.acc_z >> 8;
 
     // gyro x
-	output[16] = msg.gyro_x & 0xFF;
-	output[17] = msg.gyro_x >> 8;
+	output[20] = msg.gyro_x & 0xFF;
+	output[21] = msg.gyro_x >> 8;
 
     // gyro y
-	output[18] = msg.gyro_y & 0xFF;
-	output[19] = msg.gyro_y >> 8;
+	output[22] = msg.gyro_y & 0xFF;
+	output[23] = msg.gyro_y >> 8;
 
     // gyro z
-	output[20] = msg.gyro_z & 0xFF;
-	output[21] = msg.gyro_z >> 8;
+	output[24] = msg.gyro_z & 0xFF;
+	output[25] = msg.gyro_z >> 8;
+
+    // quat w
+	output[26] = msg.quaternion_w & 0xFF;
+	output[27] = msg.quaternion_w >> 8;
+
+    // quat x
+	output[28] = msg.quaternion_x & 0xFF;
+	output[29] = msg.quaternion_x >> 8;
+
+    // quat y
+	output[30] = msg.quaternion_y & 0xFF;
+	output[31] = msg.quaternion_y >> 8;
+
+    // quat z
+	output[32] = msg.quaternion_z & 0xFF;
+	output[33] = msg.quaternion_z >> 8;
 
     //checksum
     calc_checksum(output,IMU_MSG_LEN + 4);

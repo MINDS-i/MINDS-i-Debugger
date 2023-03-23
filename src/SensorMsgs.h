@@ -19,13 +19,14 @@
 #include "Arduino.h"
 
 # define IMU_MSG_ID 0x40
-# define IMU_MSG_LEN 18
+# define IMU_MSG_LEN 30
 # define SONAR_MSG_ID 0x41
 # define SONAR_MSG_LEN 10
 # define BUMPER_MSG_ID 0x42
 # define BUMPER_MSG_LEN 2
 
 typedef struct {
+    unsigned long ms;
     int16_t euler_x;
     int16_t euler_y;
     int16_t euler_z;
@@ -35,6 +36,10 @@ typedef struct {
     int16_t gyro_x;
     int16_t gyro_y;
     int16_t gyro_z;
+    int16_t quaternion_w;
+    int16_t quaternion_x;
+    int16_t quaternion_y;
+    int16_t quaternion_z;
 }ImuMsg_t;
 
 typedef struct {
