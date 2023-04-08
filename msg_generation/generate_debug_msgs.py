@@ -3,6 +3,7 @@ import argparse
 from copy import deepcopy
 from jinja2 import Environment, FileSystemLoader
 import os
+import sys
 import yaml
 
 # mapping from a c type to the corresponding python struct format

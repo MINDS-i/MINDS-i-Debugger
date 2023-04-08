@@ -44,10 +44,71 @@ Create a message and send it anywhere you want to send a message (sending messag
 
 ### Receiving Messages
 
-Receive messages by running the reader (specifying port and output file)
+Receive messages by running the reader (specifying port and output file). Optionally, a live view of the robot can be viewed by secifying the live plotter flag (see the usage output)
 
 ```
-./scripts/reader.py
+./scripts/reader.py -h
+```
+
+## Creating/Modifying Debug Messages
+
+The debug messages are auto generated using the message generation script. Editing the [debug_msgs.yaml](./msg_generation/debug_msgs.yaml) file and re-running the message generation script will allow you to create and modify debug messages.
+
+### YAML configuration file
+
+All debug messages are described in the follwing way:
+
+#### Built In Types
+
+These are the native types and sizes and associated with the target platform
+
+``` yaml
+{{ built_in_types }}
+```
+
+#### Custom Types
+
+These the custom types that messages can use to describe more complicated fields
+
+``` yaml
+<custom_type_name>:
+	# list of fields
+	- name: <field_name>
+		struct_type: <struct_type> # can be custom type or built in type
+		cast_type: <cast_type> # optional - built in integer type to cast the value to before sending (needed for float struct types)
+		mod_factor: <value> # optional - value to scale the field by before casting to <cast_type>
+		mod_offset: <value> # optional - value to add to the field (occurs before <mod_factor> if specified) before casting to <cast_type>
+		description: '<string>' # optional - description of the field for this README
+```
+
+#### Debug Messages
+
+These are debug messages that can be sent from the platform
+
+``` yaml
+  - name: <debug_msg_name>:
+	id: <hex_msg_id> # a unique (checked at generation time) hex identifier
+	description: '<string>' # description of the message for this README
+	fields:
+	  # list of fields
+	  - name: <field_name>
+		struct_type: <struct_type> # can be custom type or built in type
+		cast_type: <cast_type> # optional - built in integer type to cast the value to before sending (needed for float struct types)
+		mod_factor: <value> # optional - value to scale the field by before casting to <cast_type>
+		mod_offset: <value> # optional - value to add to the field (occurs before <mod_factor> if specified) before casting to <cast_type>
+        interpret: # optional - usually used for custom types
+          type: <python_type> # type hint for the python reader to display the message field
+          func: <func> # function to create a value from this type (custom functions can be defined in the reader.py script)
+        num_format: <string> # optional - python f string format string to format the field (usually to specify digits or alignment)
+		description: <string> # optional - description of the field for this README
+```
+
+### Generating the debug messages
+
+Run the message generation script once you've edited the configuration file. By default a stamped message will be created for each message type, but this can be disabled (see the usage output)
+
+```
+./msg_generation/generate_debug_msgs.py -h
 ```
 
 ## Packet Structure
