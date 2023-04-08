@@ -11,13 +11,16 @@ custom_types:
   GpsAngle_t:
     - name: minutes
       struct_type: int16_t
+      description: '(degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string'
     - name: frac
       struct_type: float
       cast_type: int32_t
       mod_factor: 100000.0
+      description: '(decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string'
 debug_msgs:
   - name: raw_position
     id: '0x10'
+    description: 'Positioning information being provided by the GPS sensor.'
     fields:
       - name: latitude
         struct_type: GpsAngle_t 
@@ -25,19 +28,23 @@ debug_msgs:
           type: float
           func: gps_angle_to_float
         num_format: '.7'
+        description: 'GPS reciever reported latitude'
       - name: longitude
         struct_type: GpsAngle_t 
         interpret:
           type: float
           func: gps_angle_to_float
         num_format: '.7'
+        description: 'GPS reciever reported longitude'
       - name: altitude
         struct_type: float
         cast_type: uint16_t
         mod_factor: 3.2932160
         mod_offset: 900.0
+        description: 'GPS reciever reported altitude (m)'
   - name: extrapolated_position
     id: '0x11'
+    description: 'Position information created through calculation rather than sensed directly.'
     fields:
       - name: latitude
         struct_type: GpsAngle_t 
@@ -45,47 +52,57 @@ debug_msgs:
           type: float
           func: gps_angle_to_float
         num_format: '.7'
+        description: 'GPS reciever reported latitude'
       - name: longitude
         struct_type: GpsAngle_t 
         interpret:
           type: float
           func: gps_angle_to_float
         num_format: '.7'
+        description: 'GPS reciever reported longitude'
       - name: altitude
         struct_type: float
         cast_type: uint16_t
         mod_factor: 3.2932160
         mod_offset: 900.0
+        description: 'Altitude extraploated between GPS readings (m)'
   - name: orientation
     id: '0x20'
+    description: 'Orientation information used for control puposes.'
     fields:
       - name: heading
         struct_type: float
         cast_type: int16_t
         mod_factor: 100.0
         num_format: '.2'
+        description: 'Heading (deg)'
       - name: roll
         struct_type: float
         cast_type: int16_t
         mod_factor: 100.0
         num_format: '.2'
+        description: 'Roll (deg)'
       - name: pitch
         struct_type: float
         cast_type: int16_t
         mod_factor: 100.0
         num_format: '.2'
+        description: 'Pitch (deg)'
   - name: radio
     id: '0x30'
+    description: 'Commands being sent by the radio controller.'
     fields:
       - name: speed
         struct_type: float
         cast_type: int16_t
         mod_factor: 100.0
         num_format: '.2'
+        description: 'Speed command from radio controller (mph)'
       - name: steering
         struct_type: uint8_t
   - name: imu
     id: '0x40'
+    description: 'Measurement information being privided by the IMU sensor.'
     fields:
       #  struct_type: unsigned long ms
       - name: euler_x
@@ -93,151 +110,191 @@ debug_msgs:
         cast_type: int16_t
         mod_factor: 10430.0
         num_format: '.2'
+        description: 'Euler angle on the X axis (rad)'
       - name: euler_y
         struct_type: float
         cast_type: int16_t
         mod_factor: 10430.0
         num_format: '.2'
+        description: 'Euler angle on the Y axis (rad)'
       - name: euler_z
         struct_type: float
         cast_type: int16_t
         mod_factor: 10430.0
         num_format: '.2'
+        description: 'Euler angle on the Z axis (rad)'
       - name: acc_x
         struct_type: float
         cast_type: int16_t
         mod_factor: 8192.0
         num_format: '.2'
+        description: 'Acceleration on the X axis (g)'
       - name: acc_y
         struct_type: float
         cast_type: int16_t
         mod_factor: 8192.0
         num_format: '.2'
+        description: 'Acceleration on the Y axis (g)'
       - name: acc_z
         struct_type: float
         cast_type: int16_t
         mod_factor: 8192.0
         num_format: '.2'
+        description: 'Acceleration on the Z axis (g)'
       - name: gyro_x
         struct_type: float
         cast_type: int16_t
         mod_factor: 16.4
         num_format: '.2'
+        description: 'Rotation rate on the X axis (deg/s)'
       - name: gyro_y
         struct_type: float
         cast_type: int16_t
         mod_factor: 16.4
         num_format: '.2'
+        description: 'Rotation rate on the Y axis (deg/s)'
       - name: gyro_z
         struct_type: float
         cast_type: int16_t
         mod_factor: 16.4
         num_format: '.2'
+        description: 'Rotation rate on the Z axis (deg/s)'
       - name: quaternion_w
         struct_type: float
         cast_type: int16_t
         mod_factor: 16384.0
         num_format: '.2'
+        description: 'W value of the quaternion matrix'
       - name: quaternion_x
         struct_type: float
         cast_type: int16_t
         mod_factor: 16384.0
         num_format: '.2'
+        description: 'X value of the quaternion matrix'
       - name: quaternion_y
         struct_type: float
         cast_type: int16_t
         mod_factor: 16384.0
         num_format: '.2'
+        description: 'Y value of the quaternion matrix'
       - name: quaternion_z
         struct_type: float
         cast_type: int16_t
         mod_factor: 16384.0
         num_format: '.2'
+        description: 'Z value of the quaternion matrix'
   - name: sonar
     id: '0x41'
+    description: 'Measurement information being provided by the sonar ring.'
     fields:
       - name: ping1
         struct_type: int16_t
+        description: 'Echo time in microseconds'
       - name: ping2
         struct_type: int16_t
+        description: 'Echo time in microseconds'
       - name: ping3
         struct_type: int16_t
+        description: 'Echo time in microseconds'
       - name: ping4
         struct_type: int16_t
+        description: 'Echo time in microseconds'
       - name: ping5
         struct_type: int16_t
+        description: 'Echo time in microseconds'
   - name: bumper
     id: '0x42'
+    description: 'Measurement information being provided by the bump sensors.'
     fields:
       - name: left
         struct_type: int8_t
+        description: 'TBD'
       - name: right
         struct_type: int8_t
+        description: 'TBD'
   - name: state
     id: '0x60'
+    description: 'Current rover state information.'
     fields: 
       - name: apmState
         struct_type: uint8_t
+        description: 'Maps [Invalid, Init, Self-test, Drive] to [0, 1, 2, 3]'
       - name: driveState
         struct_type: uint8_t
+        description: 'Maps [Invalid, Stop, Auto, Radio] to [0, 1, 2, 3]'
       - name: autoState
         struct_type: uint8_t
+        description: 'Maps [Invalid, Full, Avoid, Stalled] to [0, 1, 2, 3]'
       - name: autoFlag
         struct_type: uint8_t
+        description: 'Maps [None, Caution, Approach] to [0, 1, 2]'
       - name: voltage
         struct_type: float
         cast_type: uint8_t
         mod_factor: 10.0
+        description: 'Current battery voltage (volts)'
       - name: amperage
         struct_type: float
         cast_type: uint8_t
         mod_factor: 10.0
+        description: 'Current amperage draw on battery (amps)'
       - name: groundSpeed
         struct_type: float
         cast_type: uint8_t
         mod_factor: 10.0
+        description: 'Current speed of rover (mph)'
   - name: control
     id: '0x80'
+    description: 'Rover output control values.'
     fields:
       - name: speed
         struct_type: float
         cast_type: int16_t
         mod_factor: 100.0
         num_format: '.2'
+        description: 'Speed setting sent to controller (mph)'
       - name: steering
         struct_type: uint8_t
+        description: 'Steering angle sent to controller (centered at 90 degrees)'
       - name: sc_steering
         struct_type: float
         cast_type: int16_t
         mod_factor: 100.0
         num_format: '.2'
+        description: 'Steering controller output angle (deg) (ccw: + cw: -)'
       - name: true_steering
         struct_type: float
         cast_type: int16_t
         mod_factor: 100.0
         num_format: '.2'
+        description: 'Platform specific steering angle (deg) (centered at 90 degrees)'
       - name: k_crosstrack
         struct_type: float
         cast_type: int16_t
         mod_factor: 1000.0
         num_format: '.4'
+        description: 'Crosstrack error gain value'
       - name: k_yaw
         struct_type: float
         cast_type: int16_t
         mod_factor: 1000.0
         num_format: '.4'
+        description: 'Yaw error gain value'
       - name: heading_error
         struct_type: float
         cast_type: int16_t
         mod_factor: 100.0
         num_format: '.2'
+        description: 'Heading error (deg)'
       - name: crosstrack_error
         struct_type: float
         cast_type: int16_t
         mod_factor: 100.0
         num_format: '.2'
+        description: 'Crosstrack error (m)'
   - name: waypoint
     id: '0x81'
+    description: 'Variables used to calculate control for waypoint navigation.'
     fields:
       - name: lat_start
         struct_type: GpsAngle_t
@@ -245,48 +302,60 @@ debug_msgs:
           type: float
           func: gps_angle_to_float
         num_format: '.7'
+        description: 'Previous waypoint latitude used for creating path'
       - name: lon_start
         struct_type: GpsAngle_t
         interpret:
           type: float
           func: gps_angle_to_float
         num_format: '.7'
+        description: 'Previous waypoint longitude used for creating path'
       - name: lat_intermediate
         struct_type: GpsAngle_t
         interpret:
           type: float
           func: gps_angle_to_float
         num_format: '.7'
+        description: 'Temporary target latitude calculated by line gravity'
       - name: lon_intermediate
         struct_type: GpsAngle_t
         interpret:
           type: float
           func: gps_angle_to_float
         num_format: '.7'
+        description: 'Temporary target longitude calculated by line gravity'
       - name: lat_target
         struct_type: GpsAngle_t
         interpret:
           type: float
           func: gps_angle_to_float
         num_format: '.7'
+        description: 'Current goal waypoint latitude'
       - name: lon_target
         struct_type: GpsAngle_t
         interpret:
           type: float
           func: gps_angle_to_float
         num_format: '.7'
+        description: 'Current goal waypoint longitude'
       - name: path_heading
         struct_type: float
         cast_type: int16_t
         mod_factor: 100.0
+        description: 'Desired heading (deg)'
   - name: version
     id: '0xA0'
+    description: 'Version information.'
     fields:
       - name: debug_major
         struct_type: uint8_t
+        description: 'Major version of debug protocol'
       - name: debug_minor
         struct_type: uint8_t
+        description: 'Minor version of debug protocol'
       - name: apm_major
         struct_type: uint8_t
+        description: 'Major version of APM protocol'
       - name: apm_minor
         struct_type: uint8_t
+        description: 'Minor version of APM protocol'

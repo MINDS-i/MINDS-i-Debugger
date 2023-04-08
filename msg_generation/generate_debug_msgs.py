@@ -31,11 +31,16 @@ class DebugMsgGenerator:
                     stamped_debug_msg['id'] = f"0x{int(stamped_debug_msg['id'], 16) + 10:X}"
                 except:
                     raise ValueError(f"{debug_msg['name']} has an invalid ID: {debug_msg['id']}")
-                stamped_debug_msg['fields'] = [dict(name='timestamp',
-                                                    struct_type='uint32_t',
-                                                    num_format='.3',
-                                                    interpret=dict(type='float',
-                                                                   func='ms_to_s'))] + stamped_debug_msg['fields']
+                stamped_debug_msg['fields'] = [
+                    dict(
+                        name='timestamp',
+                        struct_type='uint32_t',
+                        num_format='.3',
+                        interpret=dict(
+                            type='float',
+                            func='ms_to_s'),
+                        description='Arduino time (ms) when the message was created')] + \
+                    stamped_debug_msg['fields']
                 stamped_debug_msgs.append(stamped_debug_msg)
 
             interleaved_list = []
@@ -62,17 +67,21 @@ class DebugMsgGenerator:
         self.env = Environment(loader = FileSystemLoader(self.templates_dir), trim_blocks=True, lstrip_blocks=True)
         self.env.filters['to_camel_case'] = self.to_camel_case
         self.env.filters['get_msg_len'] = self.get_msg_len
+        self.env.filters['get_type_size'] = self.get_type_size
         self.env.filters['handle_field'] = self.handle_field
         self.env.filters['get_base_types'] = self.get_base_types
         self.env.filters['get_struct_format'] = self.get_struct_format
         self.env.filters['get_print_format'] = self.get_print_format
         self.env.filters['get_interpreted_value'] = self.get_interpreted_value
+        self.env.filters['get_field_description'] = self.get_field_description
     
     def generate_source(self):
         for template in os.listdir(self.templates_dir):
             output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'src')
             if '.py.' in template:
                 output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'scripts')
+            elif '.md.' in template:
+                output_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
             with open(os.path.join(output_dir, template.rsplit('.', maxsplit=1)[0]), 'w') as f:
                 f.write(self.env.get_template(template).render(self.config_data))
 
@@ -145,6 +154,43 @@ class DebugMsgGenerator:
                 input_prepend = f"{'msg.' if first else ''}{prepend}{self.to_camel_case(field['name'], first=False)}."
                 for string in list(self.handle_field(type_field, prepend=input_prepend)):
                     yield string
+
+    def get_field_description(self, field, name_prepend='', descr_prepend=''):
+        if field.get('cast_type', field['struct_type']) in self.built_in_type_to_size.keys():
+            # caclulate field range and resolution given transmission type
+            field_bits = self.get_type_size(field.get('cast_type', field['struct_type'])) * 8
+            if 'u' in field.get('cast_type', field['struct_type']):
+                # unsigned
+                field_min = 0.0
+                field_max = 2**field_bits
+            else:
+                field_min = -2**(field_bits - 1)
+                field_max = 2**(field_bits - 1) - 1
+            field_resolution = 1.0 / field.get('mod_factor', 1.0)
+            field_min *= field_resolution
+            field_max *= field_resolution
+            field_offset = field.get('mod_offset', 0.0)
+            field_min -= field_offset
+            field_max -= field_offset
+
+            if field['struct_type'] == 'float':
+                field_min = f"{field_min:.6}"
+                field_max = f"{field_max:.6}"
+                field_resolution = f"{field_resolution:.3}"
+            else:
+                field_min = f"{int(field_min):d}"
+                field_max = f"{int(field_max):d}"
+                field_resolution = f"{int(field_resolution):d}"
+            yield (name_prepend + field['name'],
+                   self.get_type_size(field.get('cast_type', field['struct_type'])),
+                   field_min, field_max, field_resolution,
+                   descr_prepend + field.get('description', 'TBD'))
+        else:
+            for sub_field in self.custom_type_to_fields[field.get('cast_type', field['struct_type'])]:
+                yield from self.get_field_description(
+                    sub_field,
+                    name_prepend=f"{field['name']}.",
+                    descr_prepend=f"{field.get('description', 'TBD')} ")
     
     def get_struct_format(self, type):
         return (TYPE_TO_STRUCT_FORMAT[type], 'B' * self.get_type_size(type), self.get_type_size(type))
