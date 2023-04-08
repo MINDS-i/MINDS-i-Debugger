@@ -1,11 +1,7 @@
-import argparse
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button, CheckButtons
-import matplotlib.widgets
-import os
 import wgs84_transform_util as wtu
 import math
-import random
 
 class DebugPlotter:
     def __init__(self):
@@ -52,6 +48,11 @@ class DebugPlotter:
         self.bot_odometry_x = []
         self.bot_odometry_y = []
 
+        # start the plot
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+        plt.show(block=False)
+
     def toggle_visibility(self, label):
         line = self.label_to_lines[label]
         line.set_visible(not line.get_visible())
@@ -94,6 +95,8 @@ class DebugPlotter:
                heading_error, crosstrack_error):
         # todo need a heading_lock or intialized flag to do this right
         if not self.initialized and (bot_lat == 0.0 and bot_lon == 0.0):
+            self.fig.canvas.draw()
+            self.fig.canvas.flush_events()
             return
         self.initialized = True
 
@@ -101,8 +104,6 @@ class DebugPlotter:
             self.lat0 = bot_lat
             self.lon0 = bot_lon
 
-        #print(bot_heading)
-        
         bearing = self.calc_bearing(wp1_lat, wp1_lon, wp2_lat, wp2_lon)
 
         (bot_x), (bot_y) = wtu.wgs84_to_local_xy(bot_lat, bot_lon, lat0=self.lat0, lon0=self.lon0, alt0=0.0)
@@ -141,7 +142,7 @@ class DebugPlotter:
 
         (wp1_x, wp2_x), (wp1_y, wp2_y) = wtu.wgs84_to_local_xy([wp1_lat, wp2_lat], [wp1_lon, wp2_lon],
                                                                 lat0=self.lat0, lon0=self.lon0, alt0=0.0)
-        print(f'bot_heading: {bot_heading} test: {math.atan2(wp2_x - wp1_x, wp2_y - wp1_y) * 180.0 / math.pi} path_heading: {path_heading} bearing: {bearing} heading_error: {heading_error} crosstrack_error: {crosstrack_error} sc: {sc_steering_angle} ts: {true_steering_angle}')
+        #print(f'bot_heading: {bot_heading} test: {math.atan2(wp2_x - wp1_x, wp2_y - wp1_y) * 180.0 / math.pi} path_heading: {path_heading} bearing: {bearing} heading_error: {heading_error} crosstrack_error: {crosstrack_error} sc: {sc_steering_angle} ts: {true_steering_angle}')
         #print(wp1_lat, wp1_lon)
         # update path plot
         self.label_to_lines['path'].set_xdata([wp1_x, wp2_x])
@@ -161,5 +162,3 @@ class DebugPlotter:
         # update plot
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
-        plt.show(block=False)
-        #plt.pause(1.0)

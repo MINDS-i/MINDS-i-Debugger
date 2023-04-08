@@ -1,69 +1,15 @@
+#!/usr/bin/env python
+
 import argparse
-import os.path
-import time
-import serial
 import numpy as np
-from struct import pack,unpack
 from multiprocessing import Array, Process, RLock
-import live_debug_plotter
+import os.path
+from rich.progress import Progress, TextColumn
+import serial
 import time
 
-array_map = dict(
-    bot_lat=0,
-    bot_lon=1,
-    bot_heading=2,
-    wp1_lat=3,
-    wp1_lon=4,
-    wp2_lat=5,
-    wp2_lon=6,
-    sc_steering_angle=7,
-    true_steering_angle=8,
-    path_heading=9,
-    heading_error=10,
-    crosstrack_error=11)
-
-array_lock = RLock()
-array = Array('d', len(array_map), lock=array_lock)
-
-def update_array(fields):
-    array_lock.acquire()
-    for field, value in fields:
-        array[array_map[field]] = value
-    array_lock.release()
-
-def update_plot(array, array_lock):
-    debug_plotter = live_debug_plotter.DebugPlotter()
-    while True:
-        array_lock.acquire()
-        bot_lat = array[array_map['bot_lat']]
-        bot_lon = array[array_map['bot_lon']]
-        bot_heading = array[array_map['bot_heading']]
-        wp1_lat = array[array_map['wp1_lat']]
-        wp1_lon = array[array_map['wp1_lon']]
-        wp2_lat = array[array_map['wp2_lat']]
-        wp2_lon = array[array_map['wp2_lon']]
-        sc_steering_angle = array[array_map['sc_steering_angle']]
-        true_steering_angle = array[array_map['true_steering_angle']]
-        path_heading = array[array_map['path_heading']]
-        heading_error = array[array_map['heading_error']]
-        crosstrack_error = array[array_map['crosstrack_error']]
-        array_lock.release()
-
-        debug_plotter.update(bot_lat=bot_lat,
-                             bot_lon=bot_lon,
-                             bot_heading=bot_heading,
-                             wp1_lat=wp1_lat,
-                             wp1_lon=wp1_lon,
-                             wp2_lat=wp2_lat,
-                             wp2_lon=wp2_lon,
-                             sc_steering_angle=sc_steering_angle,
-                             true_steering_angle=true_steering_angle,
-                             path_heading=path_heading,
-                             heading_error=heading_error,
-                             crosstrack_error=crosstrack_error)
-        time.sleep(0.1)
-
-alt_conv_factor = 3.2932160
+import data_decoder
+import live_debug_plotter
 
 crctable = \
     b"\x00\x00\x89\x11\x12\x23\x9b\x32\x24\x46\xad\x57\x36\x65\xbf\x74\
@@ -99,25 +45,255 @@ crctable = \
 \x87\x77\x0e\x66\x95\x54\x1c\x45\xa3\x31\x2a\x20\xb1\x12\x38\x03\
 \xcf\xfb\x46\xea\xdd\xd8\x54\xc9\xeb\xbd\x62\xac\xf9\x9e\x70\x8f"
 
-def calc_crc(crc_buff):
+DATARATE_WARNING = 40.0
+BUFFER_WARNING = 200
 
-    # start crc as 0x0001
-    crc = np.frombuffer(b"\x01\x00",np.uint16)
-    crc = crc[0]
+ARRAY_FIELDS = [
+    'bot_lat',
+    'bot_lon',
+    'bot_heading',
+    'wp1_lat',
+    'wp1_lon',
+    'wp2_lat',
+    'wp2_lon',
+    'sc_steering_angle',
+    'true_steering_angle',
+    'path_heading',
+    'heading_error',
+    'crosstrack_error']
+ARRAY_FIELD_TO_IDX = {field: idx for idx, field in enumerate(ARRAY_FIELDS)}
 
-    table = np.frombuffer(crctable,np.uint16)
+# runs on separate core
+def update_plot(array, array_lock):
+    debug_plotter = live_debug_plotter.DebugPlotter()
+    while True:
+        array_lock.acquire()
+        bot_lat = array[ARRAY_FIELD_TO_IDX['bot_lat']]
+        bot_lon = array[ARRAY_FIELD_TO_IDX['bot_lon']]
+        bot_heading = array[ARRAY_FIELD_TO_IDX['bot_heading']]
+        wp1_lat = array[ARRAY_FIELD_TO_IDX['wp1_lat']]
+        wp1_lon = array[ARRAY_FIELD_TO_IDX['wp1_lon']]
+        wp2_lat = array[ARRAY_FIELD_TO_IDX['wp2_lat']]
+        wp2_lon = array[ARRAY_FIELD_TO_IDX['wp2_lon']]
+        sc_steering_angle = array[ARRAY_FIELD_TO_IDX['sc_steering_angle']]
+        true_steering_angle = array[ARRAY_FIELD_TO_IDX['true_steering_angle']]
+        path_heading = array[ARRAY_FIELD_TO_IDX['path_heading']]
+        heading_error = array[ARRAY_FIELD_TO_IDX['heading_error']]
+        crosstrack_error = array[ARRAY_FIELD_TO_IDX['crosstrack_error']]
+        array_lock.release()
 
-    for x in crc_buff:
-        index = (np.right_shift(crc,8) ^ x)
- #       print("{},{},{},{}".format(crc,x,index,table[index]))
-        crc = (np.left_shift(crc,8) ^ table[index]) & 0xFFFF
+        debug_plotter.update(
+            bot_lat=bot_lat,
+            bot_lon=bot_lon,
+            bot_heading=bot_heading,
+            wp1_lat=wp1_lat,
+            wp1_lon=wp1_lon,
+            wp2_lat=wp2_lat,
+            wp2_lon=wp2_lon,
+            sc_steering_angle=sc_steering_angle,
+            true_steering_angle=true_steering_angle,
+            path_heading=path_heading,
+            heading_error=heading_error,
+            crosstrack_error=crosstrack_error)
 
-    return crc
+        time.sleep(0.1) # plot updates around 10 Hz
 
-def gps_ang_to_float(min,frac):
-    deg = np.int16(min/60.0)
-    min_deg = (min-(deg*60.0)+frac/100000.0)/60.0
-    return deg+min_deg;        
+class Reader:
+    def __init__(self, port, outfile, live_plotter=False):
+        # Configure and open serial port
+        self.ser = serial.Serial(port, 115200, timeout=1)
+
+        self.decoder = data_decoder.DataDecoder(outfile)
+        self.outfile = outfile
+
+        self.live_plotter = live_plotter
+        if self.live_plotter:
+            self.array_lock = RLock()
+            # initialize array to all zeroes
+            self.array = Array('d', [0.0] * len(ARRAY_FIELD_TO_IDX), lock=self.array_lock)
+            update_process = Process(target=update_plot, args=(self.array, self.array_lock))
+            update_process.start()
+
+    @staticmethod
+    def calc_crc(crc_buff):
+        # start crc as 0x0001
+        crc = np.frombuffer(b"\x01\x00", np.uint16)
+        crc = crc[0]
+
+        table = np.frombuffer(crctable, np.uint16)
+
+        for x in crc_buff:
+            index = (np.right_shift(crc,8) ^ x)
+            #print("{},{},{},{}".format(crc,x,index,table[index]))
+            crc = (np.left_shift(crc,8) ^ table[index]) & 0xFFFF
+
+        return crc
+
+    @staticmethod
+    def find_header(buf):
+        header_bytes = 0
+        loc = 0
+
+        for x in buf:
+            if header_bytes == 0 and x == int('0x51', 16):
+                header_bytes = 1
+            elif header_bytes == 1 and x == int('0xAC', 16):
+                return loc - 1
+            else:
+                header_bytes = 0
+            loc += 1
+
+        return -1
+
+    @staticmethod
+    def check_for_msg(buf, header_loc):
+        len_idx = header_loc + 2
+
+        if len(buf) < header_loc + 6:
+            # too short for a full msg
+            return False
+        elif len(buf) < header_loc + 3 + buf[len_idx]:
+            return False
+
+        return True
+
+    def update_array(self, fields):
+        # the array is shared between two separate processes
+        self.array_lock.acquire()
+        for field, value in fields:
+            self.array[ARRAY_FIELD_TO_IDX[field]] = value
+        self.array_lock.release()
+
+    def process_msg(self, buf, header_loc):
+        # extract msg components
+        pkt_len = buf[header_loc + 2]
+        if pkt_len < 3:
+            # Remove just the header and try again
+            buf = buf[(header_loc + 2):]
+            return buf
+
+        msg_id = buf[header_loc + 3]
+        data = buf[(header_loc + 4):(header_loc + 4 + pkt_len - 3)]
+        crc_buff = buf[(header_loc + 3):(header_loc + 3 + pkt_len - 2)]
+        crc_bytes = buf[(header_loc + 3 + pkt_len - 2):(header_loc + 3 + pkt_len)]
+        crc = np.left_shift(crc_bytes[0], 8) + crc_bytes[1]
+
+        # verify no msg corruption
+        if crc == Reader.calc_crc(crc_buff):
+            msg_str, msg = self.decoder.decode_data(data, msg_id, pkt_len)
+
+            if self.live_plotter:
+                if msg_str == 'RawPosition': # RawPosition
+                    self.update_array([
+                        ('bot_lat', msg.latitude),
+                        ('bot_lon', msg.longitude)])
+                elif msg_str == 'Orientation':  # Orientation
+                    self.update_array([('bot_heading', msg.heading)])
+                elif id == 'Control': # Control
+                    self.update_array([
+                        ('sc_steering_angle', msg.sc_steering),
+                        ('true_steering_angle', msg.true_steering),
+                        ('heading_error', msg.heading_error),
+                        ('crosstrack_error', msg.crosstrack_error)])
+                elif id == 'Waypoint': # Waypoint
+                    assert isinstance(msg, data_decoder.Waypoint)
+                    self.update_array([
+                        ('wp1_lat', msg.lat_start),
+                        ('wp1_lon', msg.lon_start),
+                        ('wp2_lat', msg.lat_target),
+                        ('wp2_lon', msg.lon_target),
+                        ('path_heading', msg.path_heading)])
+        else:
+            print("Error: CRC does not match recieved")
+            # remove just the header and try again
+            buf = buf[(header_loc + 2):len(buf)]
+            return buf
+
+        # remove processed message from input buffer
+        buf = buf[(header_loc + 3 + pkt_len):len(buf)]
+        return buf
+
+    def start(self):
+        buf = bytes()
+        # todo progress bar isn't really intended for this, maybe there's a better tool in the rich library
+        with Progress(TextColumn('{task.description}')) as progress:
+            task = progress.add_task('')
+            warning_task = None
+            prev_time = time.time()
+            max_num_bytes_in_buffer = 0
+            num_bytes_read = []
+            num_bytes_in_buffer = []
+
+            while True:
+                # get number of bytes accumulated since last reading
+                num_bytes_in_buffer.append(self.ser.in_waiting)
+
+                # Read and process data from file
+                new_bytes = self.ser.read(80)
+                read_size = len(new_bytes)
+
+                # set the progress bar with datarate/buffer information
+                cur_time = time.time()
+                num_bytes_read.append(read_size)
+                if cur_time - prev_time > 1.0:
+                    # only update status bar once per second (good window size for data as well)
+                    processed_kbits = sum(num_bytes_read) / 125.0
+                    processed_kbps = processed_kbits / (cur_time - prev_time)
+                    max_num_bytes_in_buffer = max(max_num_bytes_in_buffer, max(num_bytes_in_buffer))
+                    avg_bytes_in_buffer = round(sum(num_bytes_in_buffer) / len(num_bytes_in_buffer))
+
+                    if processed_kbits > DATARATE_WARNING or avg_bytes_in_buffer > BUFFER_WARNING:
+                        # handle any warnings
+                        if warning_task is None:
+                            warning_task = progress.add_task('')
+
+                        warning_msg = ''
+                        if processed_kbits > DATARATE_WARNING:
+                            warning_msg = \
+                                '[red]Warning: High datarate! The APM is likely '\
+                                'bogged down which could cause unexpected behavior.'
+                        elif avg_bytes_in_buffer > BUFFER_WARNING:
+                            warning_msg = \
+                                '[red]Read input buffer is too large. The Debug '\
+                                'reader is likely unable to keep up.'
+                        progress.update(warning_task, description=warning_msg)
+                    else:
+                        # no warnings (remove warning line)
+                        if warning_task is not None:
+                            progress.remove_task(warning_task)
+                            warning_task = None
+
+                    status_str = f"[green]Processing Bitrate: {processed_kbps:5.2f} kbps "\
+                                 f"[blue]Input Buffer: {avg_bytes_in_buffer:3d} B (max: {max_num_bytes_in_buffer:3d} B)"
+                    progress.update(task, description=status_str)
+
+                    # clear the data for the next window
+                    num_bytes_read = []
+                    num_bytes_in_buffer = []
+
+                    prev_time = cur_time
+
+                if read_size + len(buf) < 512:
+                    buf += new_bytes
+                else:
+                    print("Error: buffer overflow")
+
+                header_loc = -1
+                full_msg = False
+                check_buff = True
+
+                while check_buff:
+                    header_loc = Reader.find_header(buf)
+                    if header_loc >= 0:
+                        full_msg = Reader.check_for_msg(buf, header_loc)
+                        if full_msg:
+                            buf = self.process_msg(buf, header_loc)
+                        else:
+                            check_buff = False
+                    else:
+                        # Garbage...toss all but last byte
+                        buf = buf[(len(buf) - 1):]
+                        check_buff = False
 
 def outfile_name(args):
     if args.outfile != None:
@@ -127,183 +303,6 @@ def outfile_name(args):
     else:
         return str(int(time.time())) + ".log"
 
-def find_header(buf):
-    header_bytes = 0
-    loc = 0
-
-    for x in buf:
-        if header_bytes == 0 and x == int('0x51',16):
-            header_bytes = 1
-        elif header_bytes == 1 and x == int('0xAC',16):
-            return loc - 1
-        else:
-            header_bytes = 0
-        loc += 1    
-    
-    return -1
-
-def check_for_msg(buf,header_loc):
-    len_idx = header_loc + 2
-
-    if len(buf) < header_loc + 6:
-        # too short for a full msg
-        return False
-    elif len(buf) < header_loc + 3 + buf[len_idx]:
-        return False
-    
-    return True
-
-def process_msg(buf,header_loc,outfile):
-
-    # extract msg components
-    pkt_len = buf[header_loc+2]
-    if pkt_len < 3:
-        # Remove just the header and try again
-        buf = buf[(header_loc+2):]
-        return buf
-
-    id = buf[header_loc+3]
-    data = buf[(header_loc+4):(header_loc + 4 + pkt_len - 3)]
-    crc_buff = buf[(header_loc+3):(header_loc+3+pkt_len-2)]
-    crc_bytes = buf[(header_loc+3+pkt_len-2):(header_loc+3+pkt_len)]
-    crc = np.left_shift(crc_bytes[0],8) + crc_bytes[1]
-
-    # verify no msg corruption
-    if crc == calc_crc(crc_buff):
-        # process message by type
-        if id == int('0x10',16): # Raw Position Msg type
-            lat_min = unpack('h',pack('BB', data[0], data[1]))
-            lat_frac = unpack('i',pack('BBBB', data[2], data[3], data[4], data[5]))
-            lon_min = unpack('h',pack('BB', data[6], data[7]))
-            lon_frac = unpack('i',pack('BBBB', data[8], data[9], data[10], data[11]))
-            alt = unpack('H',pack('BB', data[12], data[13]))  
-            #print("Position (Raw) Msg: Lat = {:0.7f}, Lon = {:0.7f}, Alt = {:0.2f}\n".format(gps_ang_to_float(lat_min[0],lat_frac[0]), gps_ang_to_float(lon_min[0],lon_frac[0]), (alt[0]/alt_conv_factor)-900),end = '')
-            outfile.write("{:d}:{:0.7f}:{:0.7f}:{:0.2f}\n".format(id, gps_ang_to_float(lat_min[0],lat_frac[0]), gps_ang_to_float(lon_min[0],lon_frac[0]), (alt[0]/alt_conv_factor)-900))
-            update_array([('bot_lat', gps_ang_to_float(lat_min[0],lat_frac[0])),
-                          ('bot_lon', gps_ang_to_float(lon_min[0],lon_frac[0]))])
-        elif id == int('0x11',16): #Extrapolated Position Msg type
-            lat_min = unpack('h',pack('BB', data[0], data[1]))
-            lat_frac = unpack('i',pack('BBBB', data[2], data[3], data[4], data[5]))
-            lon_min = unpack('h',pack('BB', data[6], data[7]))
-            lon_frac = unpack('i',pack('BBBB', data[8], data[9], data[10], data[11]))
-            alt = unpack('H',pack('BB', data[12], data[13]))  
-            print("Position (Extrapolated) Msg: Lat = {:0.7f}, Lon = {:0.7f}, Alt = {:0.2f}\n".format(gps_ang_to_float(lat_min[0],lat_frac[0]), gps_ang_to_float(lon_min[0],lon_frac[0]), (alt[0]/alt_conv_factor)-900),end = '')
-            outfile.write("{:d}:{:0.7f}:{:0.7f}:{:0.2f}\n".format(id, gps_ang_to_float(lat_min[0],lat_frac[0]), gps_ang_to_float(lon_min[0],lon_frac[0]), (alt[0]/alt_conv_factor)-900))
-        elif id == int('0x20',16): #Orientation Msg type
-            heading = unpack('h',pack('BB', data[0], data[1]))
-            roll = unpack('h',pack('BB', data[2], data[3]))
-            pitch = unpack('h',pack('BB', data[4], data[5]))  
-            #print("Orientation Msg: Heading = {:0.2f}, Roll = {:0.2f}, Pitch = {:0.2f}\n".format(heading[0]/100.0, roll[0]/100.0, pitch[0]/100.0),end = '')                
-            outfile.write("{:d}:{:0.2f}:{:0.2f}:{:0.2f}\n".format(id, heading[0]/100.0, roll[0]/100.0, pitch[0]/100.0))
-            update_array([('bot_heading', heading[0]/100.0)])
-        elif id == int('0x30',16): #Radio Msg type
-            speed = unpack('h',pack('BB', data[0], data[1]))
-            steering = unpack('b',pack('B', data[2]))
-            print("Radio Msg: Speed = {:0.2f}, steering = {}\n".format(speed[0]/100.0, steering[0]),end = '')                
-            outfile.write("{:d}:{:0.2f}:{}\n".format(id, speed[0]/100.0, steering[0]))
-        elif id == int('0x40',16): #IMU Msg type
-            ms = unpack('I',pack('BBBB', data[0], data[1], data[2], data[3]))
-            euler_x = unpack('h',pack('BB', data[4], data[5]))
-            euler_y = unpack('h',pack('BB', data[6], data[7]))
-            euler_z = unpack('h',pack('BB', data[8], data[9]))
-            acc_x = unpack('h',pack('BB', data[10], data[11]))
-            acc_y = unpack('h',pack('BB', data[12], data[13]))
-            acc_z = unpack('h',pack('BB', data[14], data[15]))
-            gyro_x = unpack('h',pack('BB', data[16], data[17]))
-            gyro_y = unpack('h',pack('BB', data[18], data[19]))
-            gyro_z = unpack('h',pack('BB', data[20], data[21]))
-            quaternion_w = unpack('h',pack('BB', data[22], data[23]))
-            quaternion_x = unpack('h',pack('BB', data[24], data[25]))
-            quaternion_y = unpack('h',pack('BB', data[26], data[27]))
-            quaternion_z = unpack('h',pack('BB', data[28], data[29]))
-            print("IMU Msg: s = {:.3f}, Eul_x = {:f}, Eul_y = {:f}, Eul_z = {:f}, Acc_x = {:f}, Acc_y = {:f}, Acc_z = {:f}, Gyr_x = {:f}, Gyr_y = {:f}, Gyr_z = {:f}, Qaut_w = {:f}, Qaut_x = {:f}, Qaut_y = {:f}, Qaut_z = {:f}\n".format(ms[0]/1000.0,euler_x[0]/10430.0,euler_y[0]/10430.0,euler_z[0]/10430.0,acc_x[0]/8192.0,acc_y[0]/8192.0,acc_z[0]/8192.0,gyro_x[0]/16.4,gyro_y[0]/16.4,gyro_z[0]/16.4,quaternion_w[0]/16384.0,quaternion_x[0]/16384.0,quaternion_y[0]/16384.0,quaternion_z[0]/16384.0),end = '')
-            outfile.write("{:d}:{:.3f}:{:f}:{:f}:{:f}:{:f}:{:f}:{:f}:{:f}:{:f}:{:f}:{:f}:{:f}:{:f}:{:f}\n".format(id, ms[0]/1000.0, euler_x[0]/10430.0,euler_y[0]/10430.0,euler_z[0]/10430.0,acc_x[0]/8192.0,acc_y[0]/8192.0,acc_z[0]/8192.0,gyro_x[0]/16.4,gyro_y[0]/16.4,gyro_z[0]/16.4,quaternion_w[0]/16384.0, quaternion_x[0]/16384.0,quaternion_y[0]/16384.0,quaternion_z[0]/16384.0))
-        elif id == int('0x41',16): #Sonar Msg type
-            ping1 = unpack('H',pack('BB', data[0], data[1]))
-            ping2 = unpack('H',pack('BB', data[2], data[3]))
-            ping3 = unpack('H',pack('BB', data[4], data[5]))
-            ping4 = unpack('H',pack('BB', data[6], data[7]))
-            ping5 = unpack('H',pack('BB', data[8], data[9]))
-            print("Sonar Msg: ping1 = {:d}, ping2 = {:d}, ping3 = {:d}, ping4 = {:d}, ping5 = {:d}\n".format(ping1[0],ping2[0],ping3[0],ping4[0],ping5[0]),end = '')                
-            outfile.write("{:d}:{:d}:{:d}:{:d}:{:d}:{:d}\n".format(id, ping1[0],ping2[0],ping3[0],ping4[0],ping5[0]))
-        elif id == int('0x42',16): #Bumper Msg type
-            left = unpack('B',pack('B', data[0]))
-            right = unpack('B',pack('B', data[1]))
-            print("Bumper Msg: left = {:d}, right = {:d}\n".format(left[0],right[0]))                
-            outfile.write("{:d}:{:d}:{:d}\n".format(id,left[0],right[0]))
-        elif id == int('0x60',16): #State Msg type
-            apmState = unpack('b',pack('B', data[0]))
-            driveState = unpack('b',pack('B', data[1]))
-            autoState = unpack('b',pack('B', data[2]))
-            autoFlag = unpack('b',pack('B', data[3]))
-            voltage = unpack('b',pack('B', data[4]))
-            amperage = unpack('b',pack('B', data[5]))
-            groundSpeed = unpack('b',pack('B', data[6]))
-            print("State Msg: apmState = {:d}, driveState = {:d}, autoState = {:d}, autoFlag = {:d}, voltage = {:0.2f}, amperage = {:0.2f}, groundSpeed = {:0.2f}\n".format(apmState[0], driveState[0], autoState[0], autoFlag[0], voltage[0]/10.0, amperage[0]/10.0, groundSpeed[0]/10.0),end = '')
-            outfile.write("{:d}:{:d}:{:d}:{:d}:{:d}:{:0.2f}:{:0.2f}:{:0.2f}\n".format(id, apmState[0], driveState[0], autoState[0], autoFlag[0], voltage[0]/10.0, amperage[0]/10.0, groundSpeed[0]/10.0))
-        elif id == int('0x70',16): #Configuration Msg type
-            print("Configuration MSG recived (not defined)\n",end = '')                
-            outfile.write("{:d}\n".format(id))
-        elif id == int('0x80',16): #Control Msg type
-            speed = unpack('h',pack('BB', data[0], data[1]))
-            steering = unpack('B',pack('B', data[2]))
-            sc_steering = unpack('h',pack('BB', data[3], data[4]))[0] / 100.0
-            true_steering = unpack('h',pack('BB', data[5], data[6]))[0] / 100.0
-            k_cross_track = unpack('h',pack('BB', data[7], data[8]))[0] / 1000.0
-            k_yaw = unpack('h',pack('BB', data[9], data[10]))[0] / 1000.0
-            heading_error = unpack('h',pack('BB', data[11], data[12]))[0] / 100.0
-            crosstrack_error = unpack('h',pack('BB', data[13], data[14]))[0] / 100.0
-            #print("Control Msg: Speed = {:0.2f}, steering = {}, sca = {:0.2f}, ta = {:0.2f}, kct = {:0.3f} ky = {:0.3f}\n".format(speed[0]/100.0, steering[0], sc_steering, true_steering, k_cross_track, k_yaw),end = '')
-            outfile.write("{:d}:{:0.2f}:{}:{:0.2f}:{:0.2f}:{:0.3f}:{:0.3f}\n".format(id, speed[0]/100.0, steering[0], sc_steering, true_steering, k_cross_track, k_yaw))
-            update_array([('sc_steering_angle', sc_steering),
-                          ('true_steering_angle', true_steering),
-                          ('heading_error', heading_error),
-                          ('crosstrack_error', crosstrack_error)])
-        elif id == int('0x81',16): #Waypoint Msg type
-            latStart_min = unpack('h',pack('BB', data[0], data[1]))
-            latStart_frac = unpack('i',pack('BBBB', data[2], data[3], data[4], data[5]))
-            lonStart_min = unpack('h',pack('BB', data[6], data[7]))
-            lonStart_frac = unpack('i',pack('BBBB', data[8], data[9], data[10], data[11]))
-            latIntermediate_min = unpack('h',pack('BB', data[12], data[13]))
-            latIntermediate_frac = unpack('i',pack('BBBB', data[14], data[15], data[16], data[17]))
-            lonIntermediate_min = unpack('h',pack('BB', data[18], data[19]))
-            lonIntermediate_frac = unpack('i',pack('BBBB', data[20], data[21], data[22], data[23]))
-            latTarget_min = unpack('h',pack('BB', data[24], data[25]))
-            latTarget_frac = unpack('i',pack('BBBB', data[26], data[27], data[28], data[29]))
-            lonTarget_min = unpack('h',pack('BB', data[30], data[31]))
-            lonTarget_frac = unpack('i',pack('BBBB', data[32], data[33], data[34], data[35]))
-            pathHeading = unpack('h',pack('BB', data[36], data[37]))
-            #print("Waypoint Msg: latStart = {:0.7f}, lonStart = {:0.7f}, latInter = {:0.7f}, lonInter = {:0.7f}, latTarget = {:0.7f}, lonTarget = {:0.7f}, pathHead = {:0.2f}\n".format(gps_ang_to_float(latStart_min[0],latStart_frac[0]), gps_ang_to_float(lonStart_min[0],lonStart_frac[0]), gps_ang_to_float(latIntermediate_min[0],latIntermediate_frac[0]), gps_ang_to_float(lonIntermediate_min[0],lonIntermediate_frac[0]), gps_ang_to_float(latTarget_min[0],latTarget_frac[0]), gps_ang_to_float(lonTarget_min[0],lonTarget_frac[0]), pathHeading[0]/100.0),end = '')
-            outfile.write("{:d}:{:0.7f}:{:0.7f}:{:0.7f}:{:0.7f}:{:0.7f}:{:0.7f}:{:0.2f}\n".format(id, gps_ang_to_float(latStart_min[0],latStart_frac[0]), gps_ang_to_float(lonStart_min[0],lonStart_frac[0]), gps_ang_to_float(latIntermediate_min[0],latIntermediate_frac[0]), gps_ang_to_float(lonIntermediate_min[0],lonIntermediate_frac[0]), gps_ang_to_float(latTarget_min[0],latTarget_frac[0]), gps_ang_to_float(lonTarget_min[0],lonTarget_frac[0]), pathHeading[0]/100.0))
-            update_array([('wp1_lat', gps_ang_to_float(latStart_min[0], latStart_frac[0])),
-                          ('wp1_lon', gps_ang_to_float(lonStart_min[0], lonStart_frac[0])),
-                          ('wp2_lat', gps_ang_to_float(latTarget_min[0], latTarget_frac[0])),
-                          ('wp2_lon', gps_ang_to_float(lonTarget_min[0], lonTarget_frac[0])),
-                          ('path_heading', pathHeading[0]/100.0)])
-        elif id == int('0x90',16): #ASCII Msg type
-            ascii = data[:pkt_len-3]
-            print("ASCII Msg: {0!s}\n".format(ascii.decode()),end = '')
-            outfile.write("{:d}:{!s}\n".format(id, ascii.decode()))
-        elif id == int('0xA0',16): #Version Msg type
-            debug_major = data[0]
-            debug_minor = data[1]
-            apm_major = data[2]
-            apm_minor = data[3]
-            print("Version Msg: debug_maj = {:d}, debug_min = {:d}, apm_major = {:d}, apm_minor = {:d}\n".format(debug_major,debug_minor,apm_major,apm_minor),end = '')                
-            outfile.write("{:d}:{:d}:{:d}:{:d}:{:d}\n".format(id, debug_major,debug_minor,apm_major,apm_minor))
-        else:
-            print("Unknown Msg type recieved: %02x\n".format(id),end = '')
-
-        outfile.flush()
-    else:
-        #print("Error: CRC does not match recieved\n",end = '')
-        # remove just the header and try again
-        buf = buf[(header_loc+2):len(buf)]
-        return buf
-
-    # remove processed message from input buffer
-    buf = buf[(header_loc+3+pkt_len):len(buf)]
-    return buf
 
 if __name__ == "__main__":
     # Gather arguments
@@ -314,71 +313,38 @@ if __name__ == "__main__":
                         help='Optional - output file with decooded log data.')
     parser.add_argument('-p', '--port', 
                         help='Serial port path to read encoded data.')
+    parser.add_argument('-l', '--live-plotter', action='store_true',
+                        help='Flag to enable live plotting')
     args = parser.parse_args()
-
-    update_array([('bot_lat', 0.0), ('bot_lon', 0.0), ('bot_heading', 0.0)])
-    update_process = Process(target=update_plot, args=(array, array_lock,))
-    update_process.start()
 
     if args.infile != None and args.port != None:
         print("Error: Both input file (-i) and serial port (-p) cannot be specified simultaneously.")
         parser.print_help()
         exit()
 
-    # Create output file for decoded data
     filename = outfile_name(args)
     try:
-        outfile = open(filename, "x")
+        # Create output file for decoded data
+        with open(filename, 'x') as outfile:
+            if args.infile != None:
+                # File decoding (file as input)
+                if not os.path.exists(args.infile):
+                    print("Error: Input file does not exist: {}".format(args.infile))
+                print(args.infile)
+                # Read and process live data
+            elif args.port != None:
+                # Live decoding (serial port)
+                try:
+                    reader = Reader(port=args.port, outfile=outfile, live_plotter=args.live_plotter)
+                    reader.start()
+                except serial.SerialException:
+                    print("Error: Could not open serial port - {}".format(args.port))
+                    exit()
+            else:
+                print("Error: Input file (-i) or serial port (-p) is required.")
+                parser.print_help()
+                exit()
     except IOError:
         print("Error: Could not create output file - {}".format(args.outfile))
         exit()        
-
-    # Live decoding (serial port)
-    if args.infile != None:
-        if not os.path.exists(args.infile):
-            print("Error: Input file does not exist: {}".format(args.infile))
-        print(args.infile)
-
-        # Read and process live data
-    
-    # File decoding (file as input)
-    elif args.port != None:
-        # Configure and open serial port
-        try:
-            ser = serial.Serial(args.port, 115200, timeout=1)
-        except serial.SerialException:
-            print("Error: Could not open serial port - {}".format(args.port))
-            exit()
-
-        buf = bytes()
-        while True:
-            # Read and process data from file
-            new_bytes = ser.read(80)
-            read_size = len(new_bytes)
-
-            if read_size + len(buf) < 512:
-                buf += new_bytes
-            else:
-                print("Error: buffer overflow\n")
-
-            header_loc = -1
-            full_msg = False
-            check_buff = True
-
-            while check_buff:
-                header_loc = find_header(buf)
-                if header_loc >= 0:
-                    full_msg = check_for_msg(buf,header_loc)
-                    if full_msg:
-                        buf = process_msg(buf,header_loc,outfile)
-                    else:
-                        check_buff = False
-                else:                
-                    # Garbage...toss all but last byte
-                    buf = buf[(len(buf)-1):]
-                    check_buff = False
-
-    else:
-        print("Error: Input file (-i) or serial port (-p) is required.")
-        parser.print_help()
         

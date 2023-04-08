@@ -26,28 +26,3 @@ MINDSiDebugger::MINDSiDebugger(long baud)
 {
     Serial2.begin(baud);
 }
-
-int32_t MINDSiDebugger::lat_float_to_int32(float lat)
-{
-  return (int32_t)(lat_conv_factor * lat);
-}
-
-int32_t MINDSiDebugger::lon_float_to_int32(float lon)
-{
-  return (int32_t)(lon_conv_factor * lon);
-}
-
-int32_t MINDSiDebugger::frac_float_to_int32(float frac)
-{
-  return (int32_t)(round(100000 * frac));
-}
-
-uint16_t MINDSiDebugger::alt_float_to_uint16(float alt)
-{
-  if (alt < -900)
-    alt = -900;
-  else if (alt > 19000)
-    alt = 19000;
-
-  return (uint16_t)(alt_conv_factor * (alt + 900));
-}

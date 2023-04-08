@@ -1,0 +1,292 @@
+built_in_types:
+  char: 1
+  int8_t: 1
+  uint8_t: 1
+  int16_t: 2
+  uint16_t: 2
+  int32_t: 4
+  uint32_t: 4
+  float: 4
+custom_types:
+  GpsAngle_t:
+    - name: minutes
+      struct_type: int16_t
+    - name: frac
+      struct_type: float
+      cast_type: int32_t
+      mod_factor: 100000.0
+debug_msgs:
+  - name: raw_position
+    id: '0x10'
+    fields:
+      - name: latitude
+        struct_type: GpsAngle_t 
+        interpret:
+          type: float
+          func: gps_angle_to_float
+        num_format: '.7'
+      - name: longitude
+        struct_type: GpsAngle_t 
+        interpret:
+          type: float
+          func: gps_angle_to_float
+        num_format: '.7'
+      - name: altitude
+        struct_type: float
+        cast_type: uint16_t
+        mod_factor: 3.2932160
+        mod_offset: 900.0
+  - name: extrapolated_position
+    id: '0x11'
+    fields:
+      - name: latitude
+        struct_type: GpsAngle_t 
+        interpret:
+          type: float
+          func: gps_angle_to_float
+        num_format: '.7'
+      - name: longitude
+        struct_type: GpsAngle_t 
+        interpret:
+          type: float
+          func: gps_angle_to_float
+        num_format: '.7'
+      - name: altitude
+        struct_type: float
+        cast_type: uint16_t
+        mod_factor: 3.2932160
+        mod_offset: 900.0
+  - name: orientation
+    id: '0x20'
+    fields:
+      - name: heading
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 100.0
+        num_format: '.2'
+      - name: roll
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 100.0
+        num_format: '.2'
+      - name: pitch
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 100.0
+        num_format: '.2'
+  - name: radio
+    id: '0x30'
+    fields:
+      - name: speed
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 100.0
+        num_format: '.2'
+      - name: steering
+        struct_type: uint8_t
+  - name: imu
+    id: '0x40'
+    fields:
+      #  struct_type: unsigned long ms
+      - name: euler_x
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 10430.0
+        num_format: '.2'
+      - name: euler_y
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 10430.0
+        num_format: '.2'
+      - name: euler_z
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 10430.0
+        num_format: '.2'
+      - name: acc_x
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 8192.0
+        num_format: '.2'
+      - name: acc_y
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 8192.0
+        num_format: '.2'
+      - name: acc_z
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 8192.0
+        num_format: '.2'
+      - name: gyro_x
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 16.4
+        num_format: '.2'
+      - name: gyro_y
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 16.4
+        num_format: '.2'
+      - name: gyro_z
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 16.4
+        num_format: '.2'
+      - name: quaternion_w
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 16384.0
+        num_format: '.2'
+      - name: quaternion_x
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 16384.0
+        num_format: '.2'
+      - name: quaternion_y
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 16384.0
+        num_format: '.2'
+      - name: quaternion_z
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 16384.0
+        num_format: '.2'
+  - name: sonar
+    id: '0x41'
+    fields:
+      - name: ping1
+        struct_type: int16_t
+      - name: ping2
+        struct_type: int16_t
+      - name: ping3
+        struct_type: int16_t
+      - name: ping4
+        struct_type: int16_t
+      - name: ping5
+        struct_type: int16_t
+  - name: bumper
+    id: '0x42'
+    fields:
+      - name: left
+        struct_type: int8_t
+      - name: right
+        struct_type: int8_t
+  - name: state
+    id: '0x60'
+    fields: 
+      - name: apmState
+        struct_type: uint8_t
+      - name: driveState
+        struct_type: uint8_t
+      - name: autoState
+        struct_type: uint8_t
+      - name: autoFlag
+        struct_type: uint8_t
+      - name: voltage
+        struct_type: float
+        cast_type: uint8_t
+        mod_factor: 10.0
+      - name: amperage
+        struct_type: float
+        cast_type: uint8_t
+        mod_factor: 10.0
+      - name: groundSpeed
+        struct_type: float
+        cast_type: uint8_t
+        mod_factor: 10.0
+  - name: control
+    id: '0x80'
+    fields:
+      - name: speed
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 100.0
+        num_format: '.2'
+      - name: steering
+        struct_type: uint8_t
+      - name: sc_steering
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 100.0
+        num_format: '.2'
+      - name: true_steering
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 100.0
+        num_format: '.2'
+      - name: k_crosstrack
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 1000.0
+        num_format: '.4'
+      - name: k_yaw
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 1000.0
+        num_format: '.4'
+      - name: heading_error
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 100.0
+        num_format: '.2'
+      - name: crosstrack_error
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 100.0
+        num_format: '.2'
+  - name: waypoint
+    id: '0x81'
+    fields:
+      - name: lat_start
+        struct_type: GpsAngle_t
+        interpret:
+          type: float
+          func: gps_angle_to_float
+        num_format: '.7'
+      - name: lon_start
+        struct_type: GpsAngle_t
+        interpret:
+          type: float
+          func: gps_angle_to_float
+        num_format: '.7'
+      - name: lat_intermediate
+        struct_type: GpsAngle_t
+        interpret:
+          type: float
+          func: gps_angle_to_float
+        num_format: '.7'
+      - name: lon_intermediate
+        struct_type: GpsAngle_t
+        interpret:
+          type: float
+          func: gps_angle_to_float
+        num_format: '.7'
+      - name: lat_target
+        struct_type: GpsAngle_t
+        interpret:
+          type: float
+          func: gps_angle_to_float
+        num_format: '.7'
+      - name: lon_target
+        struct_type: GpsAngle_t
+        interpret:
+          type: float
+          func: gps_angle_to_float
+        num_format: '.7'
+      - name: path_heading
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 100.0
+  - name: version
+    id: '0xA0'
+    fields:
+      - name: debug_major
+        struct_type: uint8_t
+      - name: debug_minor
+        struct_type: uint8_t
+      - name: apm_major
+        struct_type: uint8_t
+      - name: apm_minor
+        struct_type: uint8_t

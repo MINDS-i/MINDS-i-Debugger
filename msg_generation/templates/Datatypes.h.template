@@ -1,3 +1,4 @@
+// This file was auto-generated. Any changes to this file may be overwritten.
 /* Copyright 2021 MINDS-i, INC.
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,36 +14,23 @@
    limitations under the License.
 */
 
-#ifndef NavigationMsgs_h
-#define NavigationMsgs_h
+#ifndef Datatypes_h
+#define Datatypes_h
 
 #include "Arduino.h"
-#include "Util.h"
+    
+{% for custom_type_name, fields in custom_types.items() %}
+typedef struct {
+    {% for field in fields %}
+    {{ field['struct_type'] }} {{ field['name']|to_camel_case(first=False) }};
+    {% endfor %}
+} {{ custom_type_name }};
 
-# define CONTROL_MSG_ID 0x80
-# define CONTROL_MSG_LEN 15
-# define WAYPOINT_MSG_ID 0x81
-# define WAYPOINT_MSG_LEN 38
+{% endfor -%}
 
 typedef struct {
-    int16_t speed;
-    uint8_t steering;
-    int16_t sc_steering;
-    int16_t true_steering;
-    int16_t k_crosstrack;
-    int16_t k_yaw;
-    int16_t heading_error;
-    int16_t crosstrack_error;
-}ControlMsg_t;
-
-typedef struct {
-    GpsAngle_t latStart;
-    GpsAngle_t lonStart;
-    GpsAngle_t latIntermediate;
-    GpsAngle_t lonIntermediate;
-    GpsAngle_t latTarget;
-    GpsAngle_t lonTarget;
-    int16_t pathHeading;
-}WaypointMsg_t;
+    char data[256];
+    uint8_t len;
+} LenString_t;
 
 #endif

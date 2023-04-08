@@ -1,3 +1,4 @@
+// This file was auto-generated. Any changes to this file may be overwritten.
 /* Copyright 2021 MINDS-i, INC.
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,22 +14,19 @@
    limitations under the License.
 */
 
-#ifndef StateMsgs_h
-#define StateMsgs_h
+#ifndef Datatypes_h
+#define Datatypes_h
 
 #include "Arduino.h"
-
-# define STATE_MSG_ID 0x60
-# define STATE_MSG_LEN 7
+    
+typedef struct {
+    int16_t minutes;
+    float frac;
+} GpsAngle_t;
 
 typedef struct {
-    uint8_t apmState;
-    uint8_t driveState;
-    uint8_t autoState;
-    uint8_t autoFlag;
-    uint8_t voltage;
-    uint8_t amperage;
-    uint8_t groundSpeed;
-}StateMsg_t;
+    char data[256];
+    uint8_t len;
+} LenString_t;
 
 #endif
