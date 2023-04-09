@@ -63,7 +63,14 @@ All debug messages are described in the follwing way:
 These are the native types and sizes and associated with the target platform
 
 ``` yaml
-{'char': 1, 'int8_t': 1, 'uint8_t': 1, 'int16_t': 2, 'uint16_t': 2, 'int32_t': 4, 'uint32_t': 4, 'float': 4}
+'char': 1
+'int8_t': 1
+'uint8_t': 1
+'int16_t': 2
+'uint16_t': 2
+'int32_t': 4
+'uint32_t': 4
+'float': 4
 ```
 
 #### Custom Types
@@ -78,7 +85,7 @@ These the custom types that messages can use to describe more complicated fields
         cast_type: <cast_type> # optional - built in integer type to cast the value to before sending (needed for float struct types)
         mod_factor: <value> # optional - value to scale the field by before casting to <cast_type>
         mod_offset: <value> # optional - value to add to the field (occurs before <mod_factor> if specified) before casting to <cast_type>
-        description: '<string>' # optional - description of the field for this README
+        description: <string> # optional - description of the field for this README
 ```
 
 #### Debug Messages
