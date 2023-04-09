@@ -760,7 +760,7 @@ typedef struct {
 
 A method for sending ASCII messages. These should only be used for active debugging and should be removed before committing to the repository.
 
-```
+``` cpp
 typedef struct {
 	LenString_t ascii
 } AsciiMsg_t;
@@ -771,7 +771,7 @@ typedef struct {
 | 4-? | LenString_t | Struct of ASCII characters for temporary debugging msgs |
 
 Example:
-```
+``` cpp
 #ifdef M_DEBUG
 	AsciiMsg_t msg;
 	String tst = "ASCII MSG Here";

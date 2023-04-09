@@ -168,7 +168,8 @@ class DebugMsgGenerator:
 
     def get_import_from_log_format(self, field, data_name, idx=0):
         if field['struct_type'] in self.built_in_type_to_size.keys():
-            return (idx + 1, f"{self.get_python_type(field['struct_type'])}({data_name}[{idx}])")
+            field_python_type = self.get_python_type(field.get('interpret', {}).get('type', field['struct_type']))
+            return (idx + 1, f"{field_python_type}({data_name}[{idx}])")
         else:
             interpret = field.get('interpret', None)
             if interpret is not None:
@@ -178,7 +179,8 @@ class DebugMsgGenerator:
                 for sub_field in self.custom_type_to_fields[field.get('cast_type', field['struct_type'])]:
                     idx, from_log_format = self.get_import_from_log_format(sub_field, data_name, idx=idx)
                     from_log_formats.append(from_log_format)
-                return (idx, f"{self.get_python_type(field['struct_type'])}({', '.join(from_log_formats)})")
+                field_python_type = self.get_python_type(field.get('interpret', {}).get('type', field['struct_type']))
+                return (idx, f"{field_python_type}({', '.join(from_log_formats)})")
 
     def get_base_types(self, field):
         if field.get('cast_type', field['struct_type']) in self.built_in_type_to_size.keys():

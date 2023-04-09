@@ -73,12 +73,13 @@ class DataDecoder:
             self.outfile.write("{:d}:{!s}\n".format(msg_id, ascii.decode()))
             return ('Ascii', Ascii(ascii.decode()))
         else:
-            print(f"Unknown Msg type recieved: {msg_id:d}")
+            print(f'Unknown Msg type recieved: {msg_id:d}')
+            return ('Unknown', None)
         
         self.outfile.flush()
 
 def read_log_dataline(dataline, print_line=False):
-    data = dataline.split(':')
+    data = dataline.strip().split(':')
 {% for debug_msg in debug_msgs %}
     {%+ if loop.index == 1%}if{% else %}elif{% endif %} int(data[0]) == int('{{ debug_msg['id'] }}', 16): # {{ debug_msg['name']|to_camel_case(first=True) }}Msg_t
         if print_line:
@@ -99,7 +100,10 @@ def read_log_dataline(dataline, print_line=False):
                     {{ val }}{% if loop.index == loop.length %})){% else %},{% endif +%} # {{ field['name'] }}
     {% endfor %}
 {% endfor %}
-    elif data[0] == int('0x90', 16): # AsciiMsg_t
-        return ('Ascii', Ascii(data[1]))
+    elif int(data[0]) == int('0x90', 16): # AsciiMsg_t
+        if print_line:
+            print("Ascii", f"ascii = {':'.join(data[1:])}")
+        return ('Ascii', Ascii(':'.join(data[1:])))
     else:
-        print(f"Unknown Msg type read: {int(data[0]):d}")
+        print(f'Unknown Msg type read: {int(data[0]):d}')
+        return ('Unknown', None)

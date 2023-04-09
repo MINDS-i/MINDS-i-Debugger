@@ -351,4 +351,3 @@ if __name__ == "__main__":
     except IOError:
         print("Error: Could not create output file - {}".format(args.outfile))
         exit()        
-        

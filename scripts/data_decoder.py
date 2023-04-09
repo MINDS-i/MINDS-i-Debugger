@@ -901,12 +901,13 @@ class DataDecoder:
             self.outfile.write("{:d}:{!s}\n".format(msg_id, ascii.decode()))
             return ('Ascii', Ascii(ascii.decode()))
         else:
-            print(f"Unknown Msg type recieved: {msg_id:d}")
+            print(f'Unknown Msg type recieved: {msg_id:d}')
+            return ('Unknown', None)
         
         self.outfile.flush()
 
 def read_log_dataline(dataline, print_line=False):
-    data = dataline.split(':')
+    data = dataline.strip().split(':')
     if int(data[0]) == int('0x10', 16): # RawPositionMsg_t
         if print_line:
             print(
@@ -923,13 +924,13 @@ def read_log_dataline(dataline, print_line=False):
         if print_line:
             print(
                 f"StampedRawPosition",
-                f"timestamp = {int(data[1]):.3f}",
+                f"timestamp = {float(data[1]):.3f}",
                 f"latitude = {float(data[2]):.7f}",
                 f"longitude = {float(data[3]):.7f}",
                 f"altitude = {float(data[4]):f}")
         return ('StampedRawPosition',
                 StampedRawPosition(
-                    int(data[1]), # timestamp
+                    float(data[1]), # timestamp
                     float(data[2]), # latitude
                     float(data[3]), # longitude
                     float(data[4]))) # altitude
@@ -949,13 +950,13 @@ def read_log_dataline(dataline, print_line=False):
         if print_line:
             print(
                 f"StampedExtrapolatedPosition",
-                f"timestamp = {int(data[1]):.3f}",
+                f"timestamp = {float(data[1]):.3f}",
                 f"latitude = {float(data[2]):.7f}",
                 f"longitude = {float(data[3]):.7f}",
                 f"altitude = {float(data[4]):f}")
         return ('StampedExtrapolatedPosition',
                 StampedExtrapolatedPosition(
-                    int(data[1]), # timestamp
+                    float(data[1]), # timestamp
                     float(data[2]), # latitude
                     float(data[3]), # longitude
                     float(data[4]))) # altitude
@@ -975,13 +976,13 @@ def read_log_dataline(dataline, print_line=False):
         if print_line:
             print(
                 f"StampedOrientation",
-                f"timestamp = {int(data[1]):.3f}",
+                f"timestamp = {float(data[1]):.3f}",
                 f"heading = {float(data[2]):.2f}",
                 f"roll = {float(data[3]):.2f}",
                 f"pitch = {float(data[4]):.2f}")
         return ('StampedOrientation',
                 StampedOrientation(
-                    int(data[1]), # timestamp
+                    float(data[1]), # timestamp
                     float(data[2]), # heading
                     float(data[3]), # roll
                     float(data[4]))) # pitch
@@ -999,12 +1000,12 @@ def read_log_dataline(dataline, print_line=False):
         if print_line:
             print(
                 f"StampedRadio",
-                f"timestamp = {int(data[1]):.3f}",
+                f"timestamp = {float(data[1]):.3f}",
                 f"speed = {float(data[2]):.2f}",
                 f"steering = {int(data[3]):d}")
         return ('StampedRadio',
                 StampedRadio(
-                    int(data[1]), # timestamp
+                    float(data[1]), # timestamp
                     float(data[2]), # speed
                     int(data[3]))) # steering
     elif int(data[0]) == int('0x40', 16): # ImuMsg_t
@@ -1043,7 +1044,7 @@ def read_log_dataline(dataline, print_line=False):
         if print_line:
             print(
                 f"StampedImu",
-                f"timestamp = {int(data[1]):.3f}",
+                f"timestamp = {float(data[1]):.3f}",
                 f"euler_x = {float(data[2]):.2f}",
                 f"euler_y = {float(data[3]):.2f}",
                 f"euler_z = {float(data[4]):.2f}",
@@ -1059,7 +1060,7 @@ def read_log_dataline(dataline, print_line=False):
                 f"quaternion_z = {float(data[14]):.2f}")
         return ('StampedImu',
                 StampedImu(
-                    int(data[1]), # timestamp
+                    float(data[1]), # timestamp
                     float(data[2]), # euler_x
                     float(data[3]), # euler_y
                     float(data[4]), # euler_z
@@ -1093,7 +1094,7 @@ def read_log_dataline(dataline, print_line=False):
         if print_line:
             print(
                 f"StampedSonar",
-                f"timestamp = {int(data[1]):.3f}",
+                f"timestamp = {float(data[1]):.3f}",
                 f"ping1 = {int(data[2]):d}",
                 f"ping2 = {int(data[3]):d}",
                 f"ping3 = {int(data[4]):d}",
@@ -1101,7 +1102,7 @@ def read_log_dataline(dataline, print_line=False):
                 f"ping5 = {int(data[6]):d}")
         return ('StampedSonar',
                 StampedSonar(
-                    int(data[1]), # timestamp
+                    float(data[1]), # timestamp
                     int(data[2]), # ping1
                     int(data[3]), # ping2
                     int(data[4]), # ping3
@@ -1121,12 +1122,12 @@ def read_log_dataline(dataline, print_line=False):
         if print_line:
             print(
                 f"StampedBumper",
-                f"timestamp = {int(data[1]):.3f}",
+                f"timestamp = {float(data[1]):.3f}",
                 f"left = {int(data[2]):d}",
                 f"right = {int(data[3]):d}")
         return ('StampedBumper',
                 StampedBumper(
-                    int(data[1]), # timestamp
+                    float(data[1]), # timestamp
                     int(data[2]), # left
                     int(data[3]))) # right
     elif int(data[0]) == int('0x60', 16): # StateMsg_t
@@ -1153,7 +1154,7 @@ def read_log_dataline(dataline, print_line=False):
         if print_line:
             print(
                 f"StampedState",
-                f"timestamp = {int(data[1]):.3f}",
+                f"timestamp = {float(data[1]):.3f}",
                 f"apmState = {int(data[2]):d}",
                 f"driveState = {int(data[3]):d}",
                 f"autoState = {int(data[4]):d}",
@@ -1163,7 +1164,7 @@ def read_log_dataline(dataline, print_line=False):
                 f"groundSpeed = {float(data[8]):f}")
         return ('StampedState',
                 StampedState(
-                    int(data[1]), # timestamp
+                    float(data[1]), # timestamp
                     int(data[2]), # apmState
                     int(data[3]), # driveState
                     int(data[4]), # autoState
@@ -1197,7 +1198,7 @@ def read_log_dataline(dataline, print_line=False):
         if print_line:
             print(
                 f"StampedControl",
-                f"timestamp = {int(data[1]):.3f}",
+                f"timestamp = {float(data[1]):.3f}",
                 f"speed = {float(data[2]):.2f}",
                 f"steering = {int(data[3]):d}",
                 f"sc_steering = {float(data[4]):.2f}",
@@ -1208,7 +1209,7 @@ def read_log_dataline(dataline, print_line=False):
                 f"crosstrack_error = {float(data[9]):.2f}")
         return ('StampedControl',
                 StampedControl(
-                    int(data[1]), # timestamp
+                    float(data[1]), # timestamp
                     float(data[2]), # speed
                     int(data[3]), # steering
                     float(data[4]), # sc_steering
@@ -1241,7 +1242,7 @@ def read_log_dataline(dataline, print_line=False):
         if print_line:
             print(
                 f"StampedWaypoint",
-                f"timestamp = {int(data[1]):.3f}",
+                f"timestamp = {float(data[1]):.3f}",
                 f"lat_start = {float(data[2]):.7f}",
                 f"lon_start = {float(data[3]):.7f}",
                 f"lat_intermediate = {float(data[4]):.7f}",
@@ -1251,7 +1252,7 @@ def read_log_dataline(dataline, print_line=False):
                 f"path_heading = {float(data[8]):f}")
         return ('StampedWaypoint',
                 StampedWaypoint(
-                    int(data[1]), # timestamp
+                    float(data[1]), # timestamp
                     float(data[2]), # lat_start
                     float(data[3]), # lon_start
                     float(data[4]), # lat_intermediate
@@ -1277,19 +1278,22 @@ def read_log_dataline(dataline, print_line=False):
         if print_line:
             print(
                 f"StampedVersion",
-                f"timestamp = {int(data[1]):.3f}",
+                f"timestamp = {float(data[1]):.3f}",
                 f"debug_major = {int(data[2]):d}",
                 f"debug_minor = {int(data[3]):d}",
                 f"apm_major = {int(data[4]):d}",
                 f"apm_minor = {int(data[5]):d}")
         return ('StampedVersion',
                 StampedVersion(
-                    int(data[1]), # timestamp
+                    float(data[1]), # timestamp
                     int(data[2]), # debug_major
                     int(data[3]), # debug_minor
                     int(data[4]), # apm_major
                     int(data[5]))) # apm_minor
-    elif data[0] == int('0x90', 16): # AsciiMsg_t
-        return ('Ascii', Ascii(data[1]))
+    elif int(data[0]) == int('0x90', 16): # AsciiMsg_t
+        if print_line:
+            print("Ascii", f"ascii = {':'.join(data[1:])}")
+        return ('Ascii', Ascii(':'.join(data[1:])))
     else:
-        print(f"Unknown Msg type read: {int(data[0]):d}")
+        print(f'Unknown Msg type read: {int(data[0]):d}')
+        return ('Unknown', None)
