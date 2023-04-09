@@ -100,7 +100,7 @@ These are debug messages that can be sent from the platform
         mod_offset: <value> # optional - value to add to the field (occurs before <mod_factor> if specified) before casting to <cast_type>
             interpret: # optional - usually used for custom types
                 type: <python_type> # type hint for the python reader to display the message field
-                func: <func> # function to create a value from this type (custom functions can be defined in the reader.py script)
+                func: <func> # function to create a value from this type (custom functions can be defined in the template for data_decoder.py)
         num_format: <string> # optional - python f string format string to format the field (usually to specify digits or alignment)
         description: <string> # optional - description of the field for this README
 ```

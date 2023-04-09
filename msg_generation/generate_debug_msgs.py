@@ -74,19 +74,33 @@ class DebugMsgGenerator:
         self.env.filters['get_struct_format'] = self.get_struct_format
         self.env.filters['get_print_format'] = self.get_print_format
         self.env.filters['get_interpreted_value'] = self.get_interpreted_value
+        self.env.filters['get_interpreted_log_format'] = self.get_import_from_log_format
+        self.env.filters['get_print_from_log_format'] = self.get_print_import_from_log_format
         self.env.filters['get_field_description'] = self.get_field_description
+        self.env.filters['get_python_type'] = self.get_python_type
     
     def generate_source(self):
         for template in os.listdir(self.templates_dir):
-            output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'src')
+            output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'src')
             if '.py.' in template:
-                output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'scripts')
+                output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scripts')
             elif '.md.' in template:
-                output_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+                output_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             with open(os.path.join(output_dir, template.rsplit('.', maxsplit=1)[0]), 'w') as f:
                 f.write(self.env.get_template(template).render(self.config_data))
 
-    def get_print_format(self, field):
+    def get_python_type(self, type_name):
+        if type_name in self.built_in_type_to_size.keys():
+            # todo handle more types
+            if type_name == 'float':
+                return 'float'
+            else:
+                return 'int'
+        else:
+            # remove the c style '_t' from the type name
+            return type_name.split('_')[0]
+
+    def get_print_format(self, field, prepend=''):
         if field['struct_type'] in self.built_in_type_to_size.keys():
             interpreted_type = field.get('interpret', {}).get('type', field['struct_type'])
             format_str = str(field.get('num_format', ''))
@@ -94,7 +108,7 @@ class DebugMsgGenerator:
                 format_str += 'f'
             else:
                 format_str += 'd'
-            yield f"{{{''.join(self.get_interpreted_value(field))}:{format_str}}}"
+            yield f"{{{prepend}{''.join(self.get_interpreted_value(field))}:{format_str}}}"
         else:
             interpreted_type = field.get('interpret', {}).get('type', None)
             if interpreted_type is not None:
@@ -106,22 +120,65 @@ class DebugMsgGenerator:
                 yield f"{{{''.join(self.get_interpreted_value(field))}:{format_str}}}"
             else:
                 for sub_field in self.custom_type_to_fields[field.get('cast_type', field['struct_type'])]:
-                    yield from self.get_print_format(self, sub_field)
+                    yield from self.get_print_format(sub_field, prepend=f"{prepend}{field['name']}_")
 
-    def get_interpreted_value(self, field):
+    def get_interpreted_value(self, field, prepend=''):
         if field['struct_type'] in self.built_in_type_to_size.keys():
             interpret = field.get('interpret', None)
             if interpret is not None:
-                yield f"{field['interpret']['func']}({field['name']})"
+                return f"{field['interpret']['func']}({prepend}{field['name']})"
             else:
-                yield field['name']
+                return f"{prepend}{field['name']}"
+        else:
+            interpreted_values = []
+            for sub_field in self.custom_type_to_fields[field.get('cast_type', field['struct_type'])]:
+                interpreted_values.append(self.get_interpreted_value(sub_field, prepend=f"{prepend}{field['name']}_"))
+            interpret = field.get('interpret', None)
+            if interpret is not None:
+                return f"{field['interpret']['func']}({', '.join(interpreted_values)})"
+            else:
+                return f"{self.get_python_type(field['struct_type'])}({', '.join(interpreted_values)})"
+
+    def get_print_import_from_log_format(self, field, data_name, idx=0):
+        if field['struct_type'] in self.built_in_type_to_size.keys():
+            interpreted_type = field.get('interpret', {}).get('type', field['struct_type'])
+            format_str = str(field.get('num_format', ''))
+            if interpreted_type == 'float':
+                format_str += 'f'
+            else:
+                format_str += 'd'
+            idx, log_format = self.get_import_from_log_format(field, data_name, idx)
+            return (idx, f"{{{log_format}:{format_str}}}")
+        else:
+            interpreted_type = field.get('interpret', {}).get('type', None)
+            if interpreted_type is not None:
+                format_str = str(field.get('num_format', ''))
+                if interpreted_type == 'float':
+                    format_str += 'f'
+                else:
+                    format_str += 'd'
+                idx, log_format = self.get_import_from_log_format(field, data_name, idx)
+                return (idx, f"{{{log_format}:{format_str}}}")
+            else:
+                print_log_formats = []
+                for sub_field in self.custom_type_to_fields[field.get('cast_type', field['struct_type'])]:
+                    idx, print_log_format = self.get_print_import_from_log_format(sub_field, data_name, idx)
+                    print_log_formats.append(print_log_format)
+                return (idx, ', '.join(print_log_formats))
+
+    def get_import_from_log_format(self, field, data_name, idx=0):
+        if field['struct_type'] in self.built_in_type_to_size.keys():
+            return (idx + 1, f"{self.get_python_type(field['struct_type'])}({data_name}[{idx}])")
         else:
             interpret = field.get('interpret', None)
             if interpret is not None:
-                yield f"{field['interpret']['func']}({', '.join([sf['name'] for sf in self.get_base_types(field)])})"
+                return (idx + 1, f"{self.get_python_type(interpret['type'])}({data_name}[{idx}])")
             else:
+                from_log_formats = []
                 for sub_field in self.custom_type_to_fields[field.get('cast_type', field['struct_type'])]:
-                    yield from self.get_interpreted_value(sub_field)
+                    idx, from_log_format = self.get_import_from_log_format(sub_field, data_name, idx=idx)
+                    from_log_formats.append(from_log_format)
+                return (idx, f"{self.get_python_type(field['struct_type'])}({', '.join(from_log_formats)})")
 
     def get_base_types(self, field):
         if field.get('cast_type', field['struct_type']) in self.built_in_type_to_size.keys():
@@ -221,8 +278,8 @@ if __name__ == '__main__':
                              '(by default, stamped messages are generated)')
     args = parser.parse_args()
 
-    config_file = os.path.join(os.path.dirname(__file__), 'debug_msgs.yaml')
-    templates_dir = os.path.join(os.path.dirname(__file__), 'templates')
+    config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'debug_msgs.yaml')
+    templates_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
     dmg = DebugMsgGenerator(config_file=config_file,
                             templates_dir=templates_dir,
                             skip_timestamps=args.skip_timestamps)

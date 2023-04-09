@@ -1,16 +1,32 @@
 # This file was auto-generated. Any changes to this file may be overwritten.
 
-from collections import namedtuple
+from dataclasses import dataclass
 from struct import pack, unpack
 
-{% for debug_msg in debug_msgs %}
-{{ debug_msg['name']|to_camel_case(first=True) }} = namedtuple('{{ debug_msg['name']|to_camel_case(first=True) }}',
-    {% for field in debug_msg['fields'] %}
-    {%+ if loop.index == 1 %}[{% else %} {% endif %}'{{ field['name'] }}'{% if loop.index == loop.length %}]){% else %},{% endif +%}
+{% for custom_type_name, fields in custom_types.items() %}
+@dataclass(frozen=True)
+class {{ custom_type_name|get_python_type }}:
+    {% for field in fields %}
+    {{ field['name'] }}: {{ field.get('interpret', {}).get('type', field['struct_type'])|get_python_type }}
     {% endfor %}
 
 {% endfor %}
-Ascii = namedtuple('Ascii', ['ascii'])
+@dataclass(frozen=True)
+class LenString:
+    data: list
+    len: int
+
+{% for debug_msg in debug_msgs %}
+@dataclass(frozen=True)
+class {{ debug_msg['name']|to_camel_case(first=True) }}:
+    {% for field in debug_msg['fields'] %}
+    {{ field['name'] }}: {{ field.get('interpret', {}).get('type', field['struct_type'])|get_python_type }}
+    {% endfor %}
+
+{% endfor %}
+@dataclass(frozen=True)
+class Ascii:
+    ascii: str
 
 def gps_angle_to_float(min, frac):
     deg = min / 60.0
@@ -36,27 +52,54 @@ class DataDecoder:
         {% endfor %}
     {% endfor %}
             print(
-                f"{{ debug_msg['name']|to_camel_case(first=True) }}"\
+                f"{{ debug_msg['name']|to_camel_case(first=True) }}",
     {% for field in debug_msg['fields'] %}
-                f" {{ field['name'] }} = {{ field|get_print_format|join('') }}{% if loop.index == loop.length %}"){% else %}"\{% endif +%}
+                f"{{ field['name'] }} = {{ field|get_print_format|join(', ') }}{% if loop.index == loop.length %}"){% else %}",{% endif +%}
     {% endfor %}
             self.outfile.write(
                 f"{{ '{msg_id:d}:' }}"\
     {% for field in debug_msg['fields'] %}
-                f"{{ field|get_print_format|join(':') }}{% if loop.index == loop.length %}\n"){% else %}"\{% endif +%}
+                f"{{ field|get_print_format|join(':') }}{% if loop.index == loop.length %}\n"){% else %}:"\{% endif +%}
     {% endfor %}
             return ('{{ debug_msg['name']|to_camel_case(first=True) }}',
                     {{ debug_msg['name']|to_camel_case(first=True) }}(
     {% for field in debug_msg['fields'] %}
-                        {{ field|get_interpreted_value|list|join(',\n') }}{% if loop.index == loop.length %})){% else %},{% endif +%}
+                        {{ field|get_interpreted_value }}{% if loop.index == loop.length %})){% else %},{% endif +%}
     {% endfor %}
 {% endfor %}
-        elif msg_id == int('0x90',16): # AsciiMsg_t
+        elif msg_id == int('0x90', 16): # AsciiMsg_t
             ascii = data[:pkt_len - 3]
             print('Ascii: {0!s}'.format(ascii.decode()))
             self.outfile.write("{:d}:{!s}\n".format(msg_id, ascii.decode()))
-            return ('Ascii', Ascii(ascii))
+            return ('Ascii', Ascii(ascii.decode()))
         else:
             print(f"Unknown Msg type recieved: {msg_id:d}")
         
         self.outfile.flush()
+
+def read_log_dataline(dataline, print_line=False):
+    data = dataline.split(':')
+{% for debug_msg in debug_msgs %}
+    {%+ if loop.index == 1%}if{% else %}elif{% endif %} int(data[0]) == int('{{ debug_msg['id'] }}', 16): # {{ debug_msg['name']|to_camel_case(first=True) }}Msg_t
+        if print_line:
+            print(
+                f"{{ debug_msg['name']|to_camel_case(first=True) }}",
+    {% set idx = namespace(value=1) %}
+    {% for field in debug_msg['fields'] %}
+        {% set cur_idx, val = field|get_print_from_log_format(data_name='data', idx=idx.value) %}
+        {% set idx.value = cur_idx %}
+                f"{{ field['name'] }} = {{ val }}"{% if loop.index == loop.length %}){% else %},{% endif +%}
+    {% endfor %}
+        return ('{{ debug_msg['name']|to_camel_case(first=True) }}',
+                {{ debug_msg['name']|to_camel_case(first=True) }}(
+    {% set idx = namespace(value=1) %}
+    {% for field in debug_msg['fields'] %}
+        {% set cur_idx, val = field|get_interpreted_log_format(data_name='data', idx=idx.value) %}
+        {% set idx.value = cur_idx %}
+                    {{ val }}{% if loop.index == loop.length %})){% else %},{% endif +%} # {{ field['name'] }}
+    {% endfor %}
+{% endfor %}
+    elif data[0] == int('0x90', 16): # AsciiMsg_t
+        return ('Ascii', Ascii(data[1]))
+    else:
+        print(f"Unknown Msg type read: {int(data[0]):d}")

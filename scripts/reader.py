@@ -183,19 +183,19 @@ class Reader:
             msg_str, msg = self.decoder.decode_data(data, msg_id, pkt_len)
 
             if self.live_plotter:
-                if msg_str == 'RawPosition': # RawPosition
+                if msg_str.split('Stamped')[-1] == 'RawPosition': # RawPosition or StampedRawPosition
                     self.update_array([
                         ('bot_lat', msg.latitude),
                         ('bot_lon', msg.longitude)])
-                elif msg_str == 'Orientation':  # Orientation
+                elif msg_str.split('Stamped')[-1] == 'Orientation':  # Orientation or StampedOrientation
                     self.update_array([('bot_heading', msg.heading)])
-                elif id == 'Control': # Control
+                elif msg_str.split('Stamped')[-1] == 'Control': # Control or StampedControl
                     self.update_array([
                         ('sc_steering_angle', msg.sc_steering),
                         ('true_steering_angle', msg.true_steering),
                         ('heading_error', msg.heading_error),
                         ('crosstrack_error', msg.crosstrack_error)])
-                elif id == 'Waypoint': # Waypoint
+                elif msg_str.split('Stamped')[-1] == 'Waypoint': # Waypoint or StampedWaypoint
                     assert isinstance(msg, data_decoder.Waypoint)
                     self.update_array([
                         ('wp1_lat', msg.lat_start),
@@ -324,15 +324,19 @@ if __name__ == "__main__":
 
     filename = outfile_name(args)
     try:
-        # Create output file for decoded data
-        with open(filename, 'x') as outfile:
-            if args.infile != None:
-                # File decoding (file as input)
-                if not os.path.exists(args.infile):
-                    print("Error: Input file does not exist: {}".format(args.infile))
-                print(args.infile)
-                # Read and process live data
-            elif args.port != None:
+        if args.infile != None:
+            # File decoding (file as input)
+            if not os.path.exists(args.infile):
+                print("Error: Input file does not exist: {}".format(args.infile))
+            print(args.infile)
+
+            # Read and process logged data
+            with open(args.infile, 'r') as f:
+                for line in f.readlines():
+                    msg_type, msg = data_decoder.read_log_dataline(dataline=line, print_line=True)
+        elif args.port != None:
+            # Create output file for decoded data
+            with open(filename, 'x') as outfile:
                 # Live decoding (serial port)
                 try:
                     reader = Reader(port=args.port, outfile=outfile, live_plotter=args.live_plotter)
@@ -340,10 +344,10 @@ if __name__ == "__main__":
                 except serial.SerialException:
                     print("Error: Could not open serial port - {}".format(args.port))
                     exit()
-            else:
-                print("Error: Input file (-i) or serial port (-p) is required.")
-                parser.print_help()
-                exit()
+        else:
+            print("Error: Input file (-i) or serial port (-p) is required.")
+            parser.print_help()
+            exit()
     except IOError:
         print("Error: Could not create output file - {}".format(args.outfile))
         exit()        
