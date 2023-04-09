@@ -231,7 +231,7 @@ A method for sending ASCII messages. These should only be used for active debugg
 ```
 typedef struct {
 	LenString_t ascii
-}AsciiMsg_t;
+} AsciiMsg_t;
 ```
 
 | Byte Offset | Name | Description | 
