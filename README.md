@@ -214,8 +214,8 @@ typedef struct {
 } GpsAngle_t;
 
 typedef struct {
-	char data[256];
-	u8 len;
+    char data[256];
+    uint8_t len;
 } LenString_t;
 ```
 
