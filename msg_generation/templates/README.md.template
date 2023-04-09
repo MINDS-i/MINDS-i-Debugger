@@ -72,13 +72,13 @@ These the custom types that messages can use to describe more complicated fields
 
 ``` yaml
 <custom_type_name>:
-	# list of fields
-	- name: <field_name>
-		struct_type: <struct_type> # can be custom type or built in type
-		cast_type: <cast_type> # optional - built in integer type to cast the value to before sending (needed for float struct types)
-		mod_factor: <value> # optional - value to scale the field by before casting to <cast_type>
-		mod_offset: <value> # optional - value to add to the field (occurs before <mod_factor> if specified) before casting to <cast_type>
-		description: '<string>' # optional - description of the field for this README
+    # list of fields
+    - name: <field_name>
+        struct_type: <struct_type> # can be custom type or built in type
+        cast_type: <cast_type> # optional - built in integer type to cast the value to before sending (needed for float struct types)
+        mod_factor: <value> # optional - value to scale the field by before casting to <cast_type>
+        mod_offset: <value> # optional - value to add to the field (occurs before <mod_factor> if specified) before casting to <cast_type>
+        description: '<string>' # optional - description of the field for this README
 ```
 
 #### Debug Messages
@@ -87,20 +87,20 @@ These are debug messages that can be sent from the platform
 
 ``` yaml
   - name: <debug_msg_name>:
-	id: <hex_msg_id> # a unique (checked at generation time) hex identifier
-	description: '<string>' # description of the message for this README
-	fields:
-	  # list of fields
-	  - name: <field_name>
-		struct_type: <struct_type> # can be custom type or built in type
-		cast_type: <cast_type> # optional - built in integer type to cast the value to before sending (needed for float struct types)
-		mod_factor: <value> # optional - value to scale the field by before casting to <cast_type>
-		mod_offset: <value> # optional - value to add to the field (occurs before <mod_factor> if specified) before casting to <cast_type>
-        interpret: # optional - usually used for custom types
-          type: <python_type> # type hint for the python reader to display the message field
-          func: <func> # function to create a value from this type (custom functions can be defined in the reader.py script)
+    id: <hex_msg_id> # a unique (checked at generation time) hex identifier
+    description: '<string>' # description of the message for this README
+    fields:
+      # list of fields
+      - name: <field_name>
+        struct_type: <struct_type> # can be custom type or built in type
+        cast_type: <cast_type> # optional - built in integer type to cast the value to before sending (needed for float struct types)
+        mod_factor: <value> # optional - value to scale the field by before casting to <cast_type>
+        mod_offset: <value> # optional - value to add to the field (occurs before <mod_factor> if specified) before casting to <cast_type>
+            interpret: # optional - usually used for custom types
+                type: <python_type> # type hint for the python reader to display the message field
+                func: <func> # function to create a value from this type (custom functions can be defined in the reader.py script)
         num_format: <string> # optional - python f string format string to format the field (usually to specify digits or alignment)
-		description: <string> # optional - description of the field for this README
+        description: <string> # optional - description of the field for this README
 ```
 
 ### Generating the debug messages
