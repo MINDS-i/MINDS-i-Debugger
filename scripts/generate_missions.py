@@ -23,7 +23,7 @@ def create_gpx(filename, prepend, lat0, lon0, reference_heading):
     
     outfile = os.path.join(
         os.path.dirname(filename),
-        f'{prepend}_{os.path.splitext(os.path.basename(filename))[0]}.gpx') 
+        f'{prepend}{os.path.splitext(os.path.basename(filename))[0]}.gpx') 
     et.ElementTree(gpx).write(outfile, pretty_print=True, encoding='utf-8', xml_declaration=True)
 
 if __name__ == "__main__":

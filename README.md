@@ -201,6 +201,8 @@ List of available message types.
 | 0x8A | StampedControlMsg_t |
 | 0x81 | WaypointMsg_t |
 | 0x8B | StampedWaypointMsg_t |
+| 0x82 | ControlMsg_t |
+| 0x8C | StampedControlMsg_t |
 | 0xA0 | VersionMsg_t |
 | 0xAA | StampedVersionMsg_t |
 | 0x90 | AsciiMsg_t |
@@ -597,12 +599,6 @@ Rover output control values.
 typedef struct {
     float speed;
     uint8_t steering;
-    float scSteering;
-    float trueSteering;
-    float kCrosstrack;
-    float kYaw;
-    float headingError;
-    float crosstrackError;
 } ControlMsg_t;
 ```
 
@@ -610,12 +606,6 @@ typedef struct {
 | ------------ | ------------- | ------------- | ------------- | ------------- |
 | 4-5 | speed | -327.68..327.67 | 0.01 | Speed setting sent to controller (mph) |
 | 6 | steering | 0..256 | 1 | Steering angle sent to controller (centered at 90 degrees) |
-| 7-8 | sc_steering | -327.68..327.67 | 0.01 | Steering controller output angle (deg) (ccw: + cw: -) |
-| 9-10 | true_steering | -327.68..327.67 | 0.01 | Platform specific steering angle (deg) (centered at 90 degrees) |
-| 11-12 | k_crosstrack | -32.768..32.767 | 0.001 | Crosstrack error gain value |
-| 13-14 | k_yaw | -32.768..32.767 | 0.001 | Yaw error gain value |
-| 15-16 | heading_error | -327.68..327.67 | 0.01 | Heading error (deg) |
-| 17-18 | crosstrack_error | -327.68..327.67 | 0.01 | Crosstrack error (m) |
 
 #### StampedControl Message (0x8A)
 
@@ -626,12 +616,6 @@ typedef struct {
     uint32_t timestamp;
     float speed;
     uint8_t steering;
-    float scSteering;
-    float trueSteering;
-    float kCrosstrack;
-    float kYaw;
-    float headingError;
-    float crosstrackError;
 } StampedControlMsg_t;
 ```
 
@@ -640,12 +624,6 @@ typedef struct {
 | 4-7 | timestamp | 0..4294967296 | 1 | Arduino time (ms) when the message was created |
 | 8-9 | speed | -327.68..327.67 | 0.01 | Speed setting sent to controller (mph) |
 | 10 | steering | 0..256 | 1 | Steering angle sent to controller (centered at 90 degrees) |
-| 11-12 | sc_steering | -327.68..327.67 | 0.01 | Steering controller output angle (deg) (ccw: + cw: -) |
-| 13-14 | true_steering | -327.68..327.67 | 0.01 | Platform specific steering angle (deg) (centered at 90 degrees) |
-| 15-16 | k_crosstrack | -32.768..32.767 | 0.001 | Crosstrack error gain value |
-| 17-18 | k_yaw | -32.768..32.767 | 0.001 | Yaw error gain value |
-| 19-20 | heading_error | -327.68..327.67 | 0.01 | Heading error (deg) |
-| 21-22 | crosstrack_error | -327.68..327.67 | 0.01 | Crosstrack error (m) |
 
 #### Waypoint Message (0x81)
 
@@ -712,6 +690,56 @@ typedef struct {
 | 38-39 | lon_target.minutes | -32768..32767 | 1 | Current goal waypoint longitude (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
 | 40-43 | lon_target.frac | -21474.8..21474.8 | 1e-05 | Current goal waypoint longitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
 | 44-45 | path_heading | -327.68..327.67 | 0.01 | Desired heading (deg) |
+
+#### Control Message (0x82)
+
+Debug output for steering controller
+
+``` cpp
+typedef struct {
+    float scSteering;
+    float trueSteering;
+    float kCrosstrack;
+    float kYaw;
+    float headingError;
+    float crosstrackError;
+} ControlMsg_t;
+```
+
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-5 | sc_steering | -327.68..327.67 | 0.01 | Steering controller output angle (deg) (ccw: + cw: -) |
+| 6-7 | true_steering | -327.68..327.67 | 0.01 | Platform specific steering angle (deg) (centered at 90 degrees) |
+| 8-9 | k_crosstrack | -32.768..32.767 | 0.001 | Crosstrack error gain value |
+| 10-11 | k_yaw | -32.768..32.767 | 0.001 | Yaw error gain value |
+| 12-13 | heading_error | -327.68..327.67 | 0.01 | Heading error (deg) |
+| 14-15 | crosstrack_error | -327.68..327.67 | 0.01 | Crosstrack error (m) |
+
+#### StampedControl Message (0x8C)
+
+Debug output for steering controller
+
+``` cpp
+typedef struct {
+    uint32_t timestamp;
+    float scSteering;
+    float trueSteering;
+    float kCrosstrack;
+    float kYaw;
+    float headingError;
+    float crosstrackError;
+} StampedControlMsg_t;
+```
+
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-7 | timestamp | 0..4294967296 | 1 | Arduino time (ms) when the message was created |
+| 8-9 | sc_steering | -327.68..327.67 | 0.01 | Steering controller output angle (deg) (ccw: + cw: -) |
+| 10-11 | true_steering | -327.68..327.67 | 0.01 | Platform specific steering angle (deg) (centered at 90 degrees) |
+| 12-13 | k_crosstrack | -32.768..32.767 | 0.001 | Crosstrack error gain value |
+| 14-15 | k_yaw | -32.768..32.767 | 0.001 | Yaw error gain value |
+| 16-17 | heading_error | -327.68..327.67 | 0.01 | Heading error (deg) |
+| 18-19 | crosstrack_error | -327.68..327.67 | 0.01 | Crosstrack error (m) |
 
 #### Version Message (0xA0)
 

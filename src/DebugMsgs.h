@@ -53,13 +53,17 @@
 # define STAMPED_STATE_MSG_ID 0x6A
 # define STAMPED_STATE_MSG_LEN 11
 # define CONTROL_MSG_ID 0x80
-# define CONTROL_MSG_LEN 15
+# define CONTROL_MSG_LEN 3
 # define STAMPED_CONTROL_MSG_ID 0x8A
-# define STAMPED_CONTROL_MSG_LEN 19
+# define STAMPED_CONTROL_MSG_LEN 7
 # define WAYPOINT_MSG_ID 0x81
 # define WAYPOINT_MSG_LEN 38
 # define STAMPED_WAYPOINT_MSG_ID 0x8B
 # define STAMPED_WAYPOINT_MSG_LEN 42
+# define CONTROL_MSG_ID 0x82
+# define CONTROL_MSG_LEN 12
+# define STAMPED_CONTROL_MSG_ID 0x8C
+# define STAMPED_CONTROL_MSG_LEN 16
 # define VERSION_MSG_ID 0xA0
 # define VERSION_MSG_LEN 4
 # define STAMPED_VERSION_MSG_ID 0xAA
@@ -201,24 +205,12 @@ typedef struct {
 typedef struct {
     float speed;
     uint8_t steering;
-    float scSteering;
-    float trueSteering;
-    float kCrosstrack;
-    float kYaw;
-    float headingError;
-    float crosstrackError;
 } ControlMsg_t;
 
 typedef struct {
     uint32_t timestamp;
     float speed;
     uint8_t steering;
-    float scSteering;
-    float trueSteering;
-    float kCrosstrack;
-    float kYaw;
-    float headingError;
-    float crosstrackError;
 } StampedControlMsg_t;
 
 typedef struct {
@@ -241,6 +233,25 @@ typedef struct {
     GpsAngle_t lonTarget;
     float pathHeading;
 } StampedWaypointMsg_t;
+
+typedef struct {
+    float scSteering;
+    float trueSteering;
+    float kCrosstrack;
+    float kYaw;
+    float headingError;
+    float crosstrackError;
+} ControlMsg_t;
+
+typedef struct {
+    uint32_t timestamp;
+    float scSteering;
+    float trueSteering;
+    float kCrosstrack;
+    float kYaw;
+    float headingError;
+    float crosstrackError;
+} StampedControlMsg_t;
 
 typedef struct {
     uint8_t debugMajor;

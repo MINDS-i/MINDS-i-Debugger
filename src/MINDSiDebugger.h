@@ -48,6 +48,8 @@ class MINDSiDebugger {
     uint8_t send(StampedControlMsg_t &msg);
     uint8_t send(WaypointMsg_t &msg);
     uint8_t send(StampedWaypointMsg_t &msg);
+    uint8_t send(ControlMsg_t &msg);
+    uint8_t send(StampedControlMsg_t &msg);
     uint8_t send(VersionMsg_t &msg);
     uint8_t send(StampedVersionMsg_t &msg);
     uint8_t send(AsciiMsg_t &msg);

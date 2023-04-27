@@ -149,24 +149,12 @@ class StampedState:
 class Control:
     speed: float
     steering: int
-    sc_steering: float
-    true_steering: float
-    k_crosstrack: float
-    k_yaw: float
-    heading_error: float
-    crosstrack_error: float
 
 @dataclass(frozen=True)
 class StampedControl:
     timestamp: float
     speed: float
     steering: int
-    sc_steering: float
-    true_steering: float
-    k_crosstrack: float
-    k_yaw: float
-    heading_error: float
-    crosstrack_error: float
 
 @dataclass(frozen=True)
 class Waypoint:
@@ -188,6 +176,25 @@ class StampedWaypoint:
     lat_target: float
     lon_target: float
     path_heading: float
+
+@dataclass(frozen=True)
+class Control:
+    sc_steering: float
+    true_steering: float
+    k_crosstrack: float
+    k_yaw: float
+    heading_error: float
+    crosstrack_error: float
+
+@dataclass(frozen=True)
+class StampedControl:
+    timestamp: float
+    sc_steering: float
+    true_steering: float
+    k_crosstrack: float
+    k_yaw: float
+    heading_error: float
+    crosstrack_error: float
 
 @dataclass(frozen=True)
 class Version:
@@ -680,85 +687,37 @@ class DataDecoder:
         elif msg_id == int('0x80', 16): # ControlMsg_t
             speed = unpack('h', pack('BB', data[0], data[1]))[0] / 100.0
             steering = unpack('B', pack('B', data[2]))[0]
-            sc_steering = unpack('h', pack('BB', data[3], data[4]))[0] / 100.0
-            true_steering = unpack('h', pack('BB', data[5], data[6]))[0] / 100.0
-            k_crosstrack = unpack('h', pack('BB', data[7], data[8]))[0] / 1000.0
-            k_yaw = unpack('h', pack('BB', data[9], data[10]))[0] / 1000.0
-            heading_error = unpack('h', pack('BB', data[11], data[12]))[0] / 100.0
-            crosstrack_error = unpack('h', pack('BB', data[13], data[14]))[0] / 100.0
             print(
                 f"Control",
                 f"speed = {speed:.2f}",
-                f"steering = {steering:d}",
-                f"sc_steering = {sc_steering:.2f}",
-                f"true_steering = {true_steering:.2f}",
-                f"k_crosstrack = {k_crosstrack:.4f}",
-                f"k_yaw = {k_yaw:.4f}",
-                f"heading_error = {heading_error:.2f}",
-                f"crosstrack_error = {crosstrack_error:.2f}")
+                f"steering = {steering:d}")
             self.outfile.write(
                 f"{msg_id:d}:"\
                 f"{speed:.2f}:"\
-                f"{steering:d}:"\
-                f"{sc_steering:.2f}:"\
-                f"{true_steering:.2f}:"\
-                f"{k_crosstrack:.4f}:"\
-                f"{k_yaw:.4f}:"\
-                f"{heading_error:.2f}:"\
-                f"{crosstrack_error:.2f}\n")
+                f"{steering:d}\n")
             return ('Control',
                     Control(
                         speed,
-                        steering,
-                        sc_steering,
-                        true_steering,
-                        k_crosstrack,
-                        k_yaw,
-                        heading_error,
-                        crosstrack_error))
+                        steering))
         elif msg_id == int('0x8A', 16): # StampedControlMsg_t
             timestamp = unpack('I', pack('BBBB', data[0], data[1], data[2], data[3]))[0]
             speed = unpack('h', pack('BB', data[4], data[5]))[0] / 100.0
             steering = unpack('B', pack('B', data[6]))[0]
-            sc_steering = unpack('h', pack('BB', data[7], data[8]))[0] / 100.0
-            true_steering = unpack('h', pack('BB', data[9], data[10]))[0] / 100.0
-            k_crosstrack = unpack('h', pack('BB', data[11], data[12]))[0] / 1000.0
-            k_yaw = unpack('h', pack('BB', data[13], data[14]))[0] / 1000.0
-            heading_error = unpack('h', pack('BB', data[15], data[16]))[0] / 100.0
-            crosstrack_error = unpack('h', pack('BB', data[17], data[18]))[0] / 100.0
             print(
                 f"StampedControl",
                 f"timestamp = {ms_to_s(timestamp):.3f}",
                 f"speed = {speed:.2f}",
-                f"steering = {steering:d}",
-                f"sc_steering = {sc_steering:.2f}",
-                f"true_steering = {true_steering:.2f}",
-                f"k_crosstrack = {k_crosstrack:.4f}",
-                f"k_yaw = {k_yaw:.4f}",
-                f"heading_error = {heading_error:.2f}",
-                f"crosstrack_error = {crosstrack_error:.2f}")
+                f"steering = {steering:d}")
             self.outfile.write(
                 f"{msg_id:d}:"\
                 f"{ms_to_s(timestamp):.3f}:"\
                 f"{speed:.2f}:"\
-                f"{steering:d}:"\
-                f"{sc_steering:.2f}:"\
-                f"{true_steering:.2f}:"\
-                f"{k_crosstrack:.4f}:"\
-                f"{k_yaw:.4f}:"\
-                f"{heading_error:.2f}:"\
-                f"{crosstrack_error:.2f}\n")
+                f"{steering:d}\n")
             return ('StampedControl',
                     StampedControl(
                         ms_to_s(timestamp),
                         speed,
-                        steering,
-                        sc_steering,
-                        true_steering,
-                        k_crosstrack,
-                        k_yaw,
-                        heading_error,
-                        crosstrack_error))
+                        steering))
         elif msg_id == int('0x81', 16): # WaypointMsg_t
             lat_start_minutes = unpack('h', pack('BB', data[0], data[1]))[0]
             lat_start_frac = unpack('i', pack('BBBB', data[2], data[3], data[4], data[5]))[0] / 100000.0
@@ -845,6 +804,72 @@ class DataDecoder:
                         gps_angle_to_float(lat_target_minutes, lat_target_frac),
                         gps_angle_to_float(lon_target_minutes, lon_target_frac),
                         path_heading))
+        elif msg_id == int('0x82', 16): # ControlMsg_t
+            sc_steering = unpack('h', pack('BB', data[0], data[1]))[0] / 100.0
+            true_steering = unpack('h', pack('BB', data[2], data[3]))[0] / 100.0
+            k_crosstrack = unpack('h', pack('BB', data[4], data[5]))[0] / 1000.0
+            k_yaw = unpack('h', pack('BB', data[6], data[7]))[0] / 1000.0
+            heading_error = unpack('h', pack('BB', data[8], data[9]))[0] / 100.0
+            crosstrack_error = unpack('h', pack('BB', data[10], data[11]))[0] / 100.0
+            print(
+                f"Control",
+                f"sc_steering = {sc_steering:.2f}",
+                f"true_steering = {true_steering:.2f}",
+                f"k_crosstrack = {k_crosstrack:.4f}",
+                f"k_yaw = {k_yaw:.4f}",
+                f"heading_error = {heading_error:.2f}",
+                f"crosstrack_error = {crosstrack_error:.2f}")
+            self.outfile.write(
+                f"{msg_id:d}:"\
+                f"{sc_steering:.2f}:"\
+                f"{true_steering:.2f}:"\
+                f"{k_crosstrack:.4f}:"\
+                f"{k_yaw:.4f}:"\
+                f"{heading_error:.2f}:"\
+                f"{crosstrack_error:.2f}\n")
+            return ('Control',
+                    Control(
+                        sc_steering,
+                        true_steering,
+                        k_crosstrack,
+                        k_yaw,
+                        heading_error,
+                        crosstrack_error))
+        elif msg_id == int('0x8C', 16): # StampedControlMsg_t
+            timestamp = unpack('I', pack('BBBB', data[0], data[1], data[2], data[3]))[0]
+            sc_steering = unpack('h', pack('BB', data[4], data[5]))[0] / 100.0
+            true_steering = unpack('h', pack('BB', data[6], data[7]))[0] / 100.0
+            k_crosstrack = unpack('h', pack('BB', data[8], data[9]))[0] / 1000.0
+            k_yaw = unpack('h', pack('BB', data[10], data[11]))[0] / 1000.0
+            heading_error = unpack('h', pack('BB', data[12], data[13]))[0] / 100.0
+            crosstrack_error = unpack('h', pack('BB', data[14], data[15]))[0] / 100.0
+            print(
+                f"StampedControl",
+                f"timestamp = {ms_to_s(timestamp):.3f}",
+                f"sc_steering = {sc_steering:.2f}",
+                f"true_steering = {true_steering:.2f}",
+                f"k_crosstrack = {k_crosstrack:.4f}",
+                f"k_yaw = {k_yaw:.4f}",
+                f"heading_error = {heading_error:.2f}",
+                f"crosstrack_error = {crosstrack_error:.2f}")
+            self.outfile.write(
+                f"{msg_id:d}:"\
+                f"{ms_to_s(timestamp):.3f}:"\
+                f"{sc_steering:.2f}:"\
+                f"{true_steering:.2f}:"\
+                f"{k_crosstrack:.4f}:"\
+                f"{k_yaw:.4f}:"\
+                f"{heading_error:.2f}:"\
+                f"{crosstrack_error:.2f}\n")
+            return ('StampedControl',
+                    StampedControl(
+                        ms_to_s(timestamp),
+                        sc_steering,
+                        true_steering,
+                        k_crosstrack,
+                        k_yaw,
+                        heading_error,
+                        crosstrack_error))
         elif msg_id == int('0xA0', 16): # VersionMsg_t
             debug_major = unpack('B', pack('B', data[0]))[0]
             debug_minor = unpack('B', pack('B', data[1]))[0]
@@ -1177,47 +1202,23 @@ def read_log_dataline(dataline, print_line=False):
             print(
                 f"Control",
                 f"speed = {float(data[1]):.2f}",
-                f"steering = {int(data[2]):d}",
-                f"sc_steering = {float(data[3]):.2f}",
-                f"true_steering = {float(data[4]):.2f}",
-                f"k_crosstrack = {float(data[5]):.4f}",
-                f"k_yaw = {float(data[6]):.4f}",
-                f"heading_error = {float(data[7]):.2f}",
-                f"crosstrack_error = {float(data[8]):.2f}")
+                f"steering = {int(data[2]):d}")
         return ('Control',
                 Control(
                     float(data[1]), # speed
-                    int(data[2]), # steering
-                    float(data[3]), # sc_steering
-                    float(data[4]), # true_steering
-                    float(data[5]), # k_crosstrack
-                    float(data[6]), # k_yaw
-                    float(data[7]), # heading_error
-                    float(data[8]))) # crosstrack_error
+                    int(data[2]))) # steering
     elif int(data[0]) == int('0x8A', 16): # StampedControlMsg_t
         if print_line:
             print(
                 f"StampedControl",
                 f"timestamp = {float(data[1]):.3f}",
                 f"speed = {float(data[2]):.2f}",
-                f"steering = {int(data[3]):d}",
-                f"sc_steering = {float(data[4]):.2f}",
-                f"true_steering = {float(data[5]):.2f}",
-                f"k_crosstrack = {float(data[6]):.4f}",
-                f"k_yaw = {float(data[7]):.4f}",
-                f"heading_error = {float(data[8]):.2f}",
-                f"crosstrack_error = {float(data[9]):.2f}")
+                f"steering = {int(data[3]):d}")
         return ('StampedControl',
                 StampedControl(
                     float(data[1]), # timestamp
                     float(data[2]), # speed
-                    int(data[3]), # steering
-                    float(data[4]), # sc_steering
-                    float(data[5]), # true_steering
-                    float(data[6]), # k_crosstrack
-                    float(data[7]), # k_yaw
-                    float(data[8]), # heading_error
-                    float(data[9]))) # crosstrack_error
+                    int(data[3]))) # steering
     elif int(data[0]) == int('0x81', 16): # WaypointMsg_t
         if print_line:
             print(
@@ -1260,6 +1261,44 @@ def read_log_dataline(dataline, print_line=False):
                     float(data[6]), # lat_target
                     float(data[7]), # lon_target
                     float(data[8]))) # path_heading
+    elif int(data[0]) == int('0x82', 16): # ControlMsg_t
+        if print_line:
+            print(
+                f"Control",
+                f"sc_steering = {float(data[1]):.2f}",
+                f"true_steering = {float(data[2]):.2f}",
+                f"k_crosstrack = {float(data[3]):.4f}",
+                f"k_yaw = {float(data[4]):.4f}",
+                f"heading_error = {float(data[5]):.2f}",
+                f"crosstrack_error = {float(data[6]):.2f}")
+        return ('Control',
+                Control(
+                    float(data[1]), # sc_steering
+                    float(data[2]), # true_steering
+                    float(data[3]), # k_crosstrack
+                    float(data[4]), # k_yaw
+                    float(data[5]), # heading_error
+                    float(data[6]))) # crosstrack_error
+    elif int(data[0]) == int('0x8C', 16): # StampedControlMsg_t
+        if print_line:
+            print(
+                f"StampedControl",
+                f"timestamp = {float(data[1]):.3f}",
+                f"sc_steering = {float(data[2]):.2f}",
+                f"true_steering = {float(data[3]):.2f}",
+                f"k_crosstrack = {float(data[4]):.4f}",
+                f"k_yaw = {float(data[5]):.4f}",
+                f"heading_error = {float(data[6]):.2f}",
+                f"crosstrack_error = {float(data[7]):.2f}")
+        return ('StampedControl',
+                StampedControl(
+                    float(data[1]), # timestamp
+                    float(data[2]), # sc_steering
+                    float(data[3]), # true_steering
+                    float(data[4]), # k_crosstrack
+                    float(data[5]), # k_yaw
+                    float(data[6]), # heading_error
+                    float(data[7]))) # crosstrack_error
     elif int(data[0]) == int('0xA0', 16): # VersionMsg_t
         if print_line:
             print(

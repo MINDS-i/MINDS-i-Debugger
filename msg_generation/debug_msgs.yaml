@@ -256,42 +256,6 @@ debug_msgs:
       - name: steering
         struct_type: uint8_t
         description: 'Steering angle sent to controller (centered at 90 degrees)'
-      - name: sc_steering
-        struct_type: float
-        cast_type: int16_t
-        mod_factor: 100.0
-        num_format: '.2'
-        description: 'Steering controller output angle (deg) (ccw: + cw: -)'
-      - name: true_steering
-        struct_type: float
-        cast_type: int16_t
-        mod_factor: 100.0
-        num_format: '.2'
-        description: 'Platform specific steering angle (deg) (centered at 90 degrees)'
-      - name: k_crosstrack
-        struct_type: float
-        cast_type: int16_t
-        mod_factor: 1000.0
-        num_format: '.4'
-        description: 'Crosstrack error gain value'
-      - name: k_yaw
-        struct_type: float
-        cast_type: int16_t
-        mod_factor: 1000.0
-        num_format: '.4'
-        description: 'Yaw error gain value'
-      - name: heading_error
-        struct_type: float
-        cast_type: int16_t
-        mod_factor: 100.0
-        num_format: '.2'
-        description: 'Heading error (deg)'
-      - name: crosstrack_error
-        struct_type: float
-        cast_type: int16_t
-        mod_factor: 100.0
-        num_format: '.2'
-        description: 'Crosstrack error (m)'
   - name: waypoint
     id: '0x81'
     description: 'Variables used to calculate control for waypoint navigation.'
@@ -343,6 +307,46 @@ debug_msgs:
         cast_type: int16_t
         mod_factor: 100.0
         description: 'Desired heading (deg)'
+  - name: control
+    id: '0x82'
+    description: 'Debug output for steering controller'
+    fields:
+      - name: sc_steering
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 100.0
+        num_format: '.2'
+        description: 'Steering controller output angle (deg) (ccw: + cw: -)'
+      - name: true_steering
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 100.0
+        num_format: '.2'
+        description: 'Platform specific steering angle (deg) (centered at 90 degrees)'
+      - name: k_crosstrack
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 1000.0
+        num_format: '.4'
+        description: 'Crosstrack error gain value'
+      - name: k_yaw
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 1000.0
+        num_format: '.4'
+        description: 'Yaw error gain value'
+      - name: heading_error
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 100.0
+        num_format: '.2'
+        description: 'Heading error (deg)'
+      - name: crosstrack_error
+        struct_type: float
+        cast_type: int16_t
+        mod_factor: 100.0
+        num_format: '.2'
+        description: 'Crosstrack error (m)'
   - name: version
     id: '0xA0'
     description: 'Version information.'

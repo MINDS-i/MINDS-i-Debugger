@@ -755,30 +755,6 @@ uint8_t MINDSiDebugger::send(ControlMsg_t &msg)
     // steering
     output[6] = msg.steering & 0xFF;
 
-    // scSteering
-    output[7] = int16_t(round(msg.scSteering * 100.0)) & 0xFF;
-    output[8] = int16_t(round(msg.scSteering * 100.0)) >> 8;
-
-    // trueSteering
-    output[9] = int16_t(round(msg.trueSteering * 100.0)) & 0xFF;
-    output[10] = int16_t(round(msg.trueSteering * 100.0)) >> 8;
-
-    // kCrosstrack
-    output[11] = int16_t(round(msg.kCrosstrack * 1000.0)) & 0xFF;
-    output[12] = int16_t(round(msg.kCrosstrack * 1000.0)) >> 8;
-
-    // kYaw
-    output[13] = int16_t(round(msg.kYaw * 1000.0)) & 0xFF;
-    output[14] = int16_t(round(msg.kYaw * 1000.0)) >> 8;
-
-    // headingError
-    output[15] = int16_t(round(msg.headingError * 100.0)) & 0xFF;
-    output[16] = int16_t(round(msg.headingError * 100.0)) >> 8;
-
-    // crosstrackError
-    output[17] = int16_t(round(msg.crosstrackError * 100.0)) & 0xFF;
-    output[18] = int16_t(round(msg.crosstrackError * 100.0)) >> 8;
-
     // checksum
     calc_checksum(output, CONTROL_MSG_LEN + 4);
 
@@ -813,30 +789,6 @@ uint8_t MINDSiDebugger::send(StampedControlMsg_t &msg)
 
     // steering
     output[10] = msg.steering & 0xFF;
-
-    // scSteering
-    output[11] = int16_t(round(msg.scSteering * 100.0)) & 0xFF;
-    output[12] = int16_t(round(msg.scSteering * 100.0)) >> 8;
-
-    // trueSteering
-    output[13] = int16_t(round(msg.trueSteering * 100.0)) & 0xFF;
-    output[14] = int16_t(round(msg.trueSteering * 100.0)) >> 8;
-
-    // kCrosstrack
-    output[15] = int16_t(round(msg.kCrosstrack * 1000.0)) & 0xFF;
-    output[16] = int16_t(round(msg.kCrosstrack * 1000.0)) >> 8;
-
-    // kYaw
-    output[17] = int16_t(round(msg.kYaw * 1000.0)) & 0xFF;
-    output[18] = int16_t(round(msg.kYaw * 1000.0)) >> 8;
-
-    // headingError
-    output[19] = int16_t(round(msg.headingError * 100.0)) & 0xFF;
-    output[20] = int16_t(round(msg.headingError * 100.0)) >> 8;
-
-    // crosstrackError
-    output[21] = int16_t(round(msg.crosstrackError * 100.0)) & 0xFF;
-    output[22] = int16_t(round(msg.crosstrackError * 100.0)) >> 8;
 
     // checksum
     calc_checksum(output, STAMPED_CONTROL_MSG_LEN + 4);
@@ -996,6 +948,104 @@ uint8_t MINDSiDebugger::send(StampedWaypointMsg_t &msg)
     calc_checksum(output, STAMPED_WAYPOINT_MSG_LEN + 4);
 
     Serial2.write(output, STAMPED_WAYPOINT_MSG_LEN + 3 + 3);
+
+    return RETURN_CODE_OK;
+}
+
+uint8_t MINDSiDebugger::send(ControlMsg_t &msg)
+{
+    uint8_t output[CONTROL_MSG_LEN + 3 + 3];
+
+    // header bytes
+    output[0] = 0x51;
+    output[1] = 0xAC;
+
+    // length
+    output[2] = CONTROL_MSG_LEN + 3;
+
+    // msg id
+    output[3] = CONTROL_MSG_ID;
+
+    // scSteering
+    output[4] = int16_t(round(msg.scSteering * 100.0)) & 0xFF;
+    output[5] = int16_t(round(msg.scSteering * 100.0)) >> 8;
+
+    // trueSteering
+    output[6] = int16_t(round(msg.trueSteering * 100.0)) & 0xFF;
+    output[7] = int16_t(round(msg.trueSteering * 100.0)) >> 8;
+
+    // kCrosstrack
+    output[8] = int16_t(round(msg.kCrosstrack * 1000.0)) & 0xFF;
+    output[9] = int16_t(round(msg.kCrosstrack * 1000.0)) >> 8;
+
+    // kYaw
+    output[10] = int16_t(round(msg.kYaw * 1000.0)) & 0xFF;
+    output[11] = int16_t(round(msg.kYaw * 1000.0)) >> 8;
+
+    // headingError
+    output[12] = int16_t(round(msg.headingError * 100.0)) & 0xFF;
+    output[13] = int16_t(round(msg.headingError * 100.0)) >> 8;
+
+    // crosstrackError
+    output[14] = int16_t(round(msg.crosstrackError * 100.0)) & 0xFF;
+    output[15] = int16_t(round(msg.crosstrackError * 100.0)) >> 8;
+
+    // checksum
+    calc_checksum(output, CONTROL_MSG_LEN + 4);
+
+    Serial2.write(output, CONTROL_MSG_LEN + 3 + 3);
+
+    return RETURN_CODE_OK;
+}
+
+uint8_t MINDSiDebugger::send(StampedControlMsg_t &msg)
+{
+    uint8_t output[STAMPED_CONTROL_MSG_LEN + 3 + 3];
+
+    // header bytes
+    output[0] = 0x51;
+    output[1] = 0xAC;
+
+    // length
+    output[2] = STAMPED_CONTROL_MSG_LEN + 3;
+
+    // msg id
+    output[3] = STAMPED_CONTROL_MSG_ID;
+
+    // timestamp
+    output[4] = msg.timestamp & 0xFF;
+    output[5] = msg.timestamp >> 8;
+    output[6] = msg.timestamp >> 16;
+    output[7] = msg.timestamp >> 24;
+
+    // scSteering
+    output[8] = int16_t(round(msg.scSteering * 100.0)) & 0xFF;
+    output[9] = int16_t(round(msg.scSteering * 100.0)) >> 8;
+
+    // trueSteering
+    output[10] = int16_t(round(msg.trueSteering * 100.0)) & 0xFF;
+    output[11] = int16_t(round(msg.trueSteering * 100.0)) >> 8;
+
+    // kCrosstrack
+    output[12] = int16_t(round(msg.kCrosstrack * 1000.0)) & 0xFF;
+    output[13] = int16_t(round(msg.kCrosstrack * 1000.0)) >> 8;
+
+    // kYaw
+    output[14] = int16_t(round(msg.kYaw * 1000.0)) & 0xFF;
+    output[15] = int16_t(round(msg.kYaw * 1000.0)) >> 8;
+
+    // headingError
+    output[16] = int16_t(round(msg.headingError * 100.0)) & 0xFF;
+    output[17] = int16_t(round(msg.headingError * 100.0)) >> 8;
+
+    // crosstrackError
+    output[18] = int16_t(round(msg.crosstrackError * 100.0)) & 0xFF;
+    output[19] = int16_t(round(msg.crosstrackError * 100.0)) >> 8;
+
+    // checksum
+    calc_checksum(output, STAMPED_CONTROL_MSG_LEN + 4);
+
+    Serial2.write(output, STAMPED_CONTROL_MSG_LEN + 3 + 3);
 
     return RETURN_CODE_OK;
 }
