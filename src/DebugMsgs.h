@@ -60,10 +60,10 @@
 # define WAYPOINT_MSG_LEN 38
 # define STAMPED_WAYPOINT_MSG_ID 0x8B
 # define STAMPED_WAYPOINT_MSG_LEN 42
-# define CONTROL_MSG_ID 0x82
-# define CONTROL_MSG_LEN 12
-# define STAMPED_CONTROL_MSG_ID 0x8C
-# define STAMPED_CONTROL_MSG_LEN 16
+# define STEERING_CONTROLLER_MSG_ID 0x82
+# define STEERING_CONTROLLER_MSG_LEN 12
+# define STAMPED_STEERING_CONTROLLER_MSG_ID 0x8C
+# define STAMPED_STEERING_CONTROLLER_MSG_LEN 16
 # define VERSION_MSG_ID 0xA0
 # define VERSION_MSG_LEN 4
 # define STAMPED_VERSION_MSG_ID 0xAA
@@ -241,7 +241,7 @@ typedef struct {
     float kYaw;
     float headingError;
     float crosstrackError;
-} ControlMsg_t;
+} SteeringControllerMsg_t;
 
 typedef struct {
     uint32_t timestamp;
@@ -251,7 +251,7 @@ typedef struct {
     float kYaw;
     float headingError;
     float crosstrackError;
-} StampedControlMsg_t;
+} StampedSteeringControllerMsg_t;
 
 typedef struct {
     uint8_t debugMajor;

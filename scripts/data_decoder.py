@@ -178,7 +178,7 @@ class StampedWaypoint:
     path_heading: float
 
 @dataclass(frozen=True)
-class Control:
+class SteeringController:
     sc_steering: float
     true_steering: float
     k_crosstrack: float
@@ -187,7 +187,7 @@ class Control:
     crosstrack_error: float
 
 @dataclass(frozen=True)
-class StampedControl:
+class StampedSteeringController:
     timestamp: float
     sc_steering: float
     true_steering: float
@@ -804,7 +804,7 @@ class DataDecoder:
                         gps_angle_to_float(lat_target_minutes, lat_target_frac),
                         gps_angle_to_float(lon_target_minutes, lon_target_frac),
                         path_heading))
-        elif msg_id == int('0x82', 16): # ControlMsg_t
+        elif msg_id == int('0x82', 16): # SteeringControllerMsg_t
             sc_steering = unpack('h', pack('BB', data[0], data[1]))[0] / 100.0
             true_steering = unpack('h', pack('BB', data[2], data[3]))[0] / 100.0
             k_crosstrack = unpack('h', pack('BB', data[4], data[5]))[0] / 1000.0
@@ -812,7 +812,7 @@ class DataDecoder:
             heading_error = unpack('h', pack('BB', data[8], data[9]))[0] / 100.0
             crosstrack_error = unpack('h', pack('BB', data[10], data[11]))[0] / 100.0
             print(
-                f"Control",
+                f"SteeringController",
                 f"sc_steering = {sc_steering:.2f}",
                 f"true_steering = {true_steering:.2f}",
                 f"k_crosstrack = {k_crosstrack:.4f}",
@@ -827,15 +827,15 @@ class DataDecoder:
                 f"{k_yaw:.4f}:"\
                 f"{heading_error:.2f}:"\
                 f"{crosstrack_error:.2f}\n")
-            return ('Control',
-                    Control(
+            return ('SteeringController',
+                    SteeringController(
                         sc_steering,
                         true_steering,
                         k_crosstrack,
                         k_yaw,
                         heading_error,
                         crosstrack_error))
-        elif msg_id == int('0x8C', 16): # StampedControlMsg_t
+        elif msg_id == int('0x8C', 16): # StampedSteeringControllerMsg_t
             timestamp = unpack('I', pack('BBBB', data[0], data[1], data[2], data[3]))[0]
             sc_steering = unpack('h', pack('BB', data[4], data[5]))[0] / 100.0
             true_steering = unpack('h', pack('BB', data[6], data[7]))[0] / 100.0
@@ -844,7 +844,7 @@ class DataDecoder:
             heading_error = unpack('h', pack('BB', data[12], data[13]))[0] / 100.0
             crosstrack_error = unpack('h', pack('BB', data[14], data[15]))[0] / 100.0
             print(
-                f"StampedControl",
+                f"StampedSteeringController",
                 f"timestamp = {ms_to_s(timestamp):.3f}",
                 f"sc_steering = {sc_steering:.2f}",
                 f"true_steering = {true_steering:.2f}",
@@ -861,8 +861,8 @@ class DataDecoder:
                 f"{k_yaw:.4f}:"\
                 f"{heading_error:.2f}:"\
                 f"{crosstrack_error:.2f}\n")
-            return ('StampedControl',
-                    StampedControl(
+            return ('StampedSteeringController',
+                    StampedSteeringController(
                         ms_to_s(timestamp),
                         sc_steering,
                         true_steering,
@@ -1261,28 +1261,28 @@ def read_log_dataline(dataline, print_line=False):
                     float(data[6]), # lat_target
                     float(data[7]), # lon_target
                     float(data[8]))) # path_heading
-    elif int(data[0]) == int('0x82', 16): # ControlMsg_t
+    elif int(data[0]) == int('0x82', 16): # SteeringControllerMsg_t
         if print_line:
             print(
-                f"Control",
+                f"SteeringController",
                 f"sc_steering = {float(data[1]):.2f}",
                 f"true_steering = {float(data[2]):.2f}",
                 f"k_crosstrack = {float(data[3]):.4f}",
                 f"k_yaw = {float(data[4]):.4f}",
                 f"heading_error = {float(data[5]):.2f}",
                 f"crosstrack_error = {float(data[6]):.2f}")
-        return ('Control',
-                Control(
+        return ('SteeringController',
+                SteeringController(
                     float(data[1]), # sc_steering
                     float(data[2]), # true_steering
                     float(data[3]), # k_crosstrack
                     float(data[4]), # k_yaw
                     float(data[5]), # heading_error
                     float(data[6]))) # crosstrack_error
-    elif int(data[0]) == int('0x8C', 16): # StampedControlMsg_t
+    elif int(data[0]) == int('0x8C', 16): # StampedSteeringControllerMsg_t
         if print_line:
             print(
-                f"StampedControl",
+                f"StampedSteeringController",
                 f"timestamp = {float(data[1]):.3f}",
                 f"sc_steering = {float(data[2]):.2f}",
                 f"true_steering = {float(data[3]):.2f}",
@@ -1290,8 +1290,8 @@ def read_log_dataline(dataline, print_line=False):
                 f"k_yaw = {float(data[5]):.4f}",
                 f"heading_error = {float(data[6]):.2f}",
                 f"crosstrack_error = {float(data[7]):.2f}")
-        return ('StampedControl',
-                StampedControl(
+        return ('StampedSteeringController',
+                StampedSteeringController(
                     float(data[1]), # timestamp
                     float(data[2]), # sc_steering
                     float(data[3]), # true_steering

@@ -952,19 +952,19 @@ uint8_t MINDSiDebugger::send(StampedWaypointMsg_t &msg)
     return RETURN_CODE_OK;
 }
 
-uint8_t MINDSiDebugger::send(ControlMsg_t &msg)
+uint8_t MINDSiDebugger::send(SteeringControllerMsg_t &msg)
 {
-    uint8_t output[CONTROL_MSG_LEN + 3 + 3];
+    uint8_t output[STEERING_CONTROLLER_MSG_LEN + 3 + 3];
 
     // header bytes
     output[0] = 0x51;
     output[1] = 0xAC;
 
     // length
-    output[2] = CONTROL_MSG_LEN + 3;
+    output[2] = STEERING_CONTROLLER_MSG_LEN + 3;
 
     // msg id
-    output[3] = CONTROL_MSG_ID;
+    output[3] = STEERING_CONTROLLER_MSG_ID;
 
     // scSteering
     output[4] = int16_t(round(msg.scSteering * 100.0)) & 0xFF;
@@ -991,26 +991,26 @@ uint8_t MINDSiDebugger::send(ControlMsg_t &msg)
     output[15] = int16_t(round(msg.crosstrackError * 100.0)) >> 8;
 
     // checksum
-    calc_checksum(output, CONTROL_MSG_LEN + 4);
+    calc_checksum(output, STEERING_CONTROLLER_MSG_LEN + 4);
 
-    Serial2.write(output, CONTROL_MSG_LEN + 3 + 3);
+    Serial2.write(output, STEERING_CONTROLLER_MSG_LEN + 3 + 3);
 
     return RETURN_CODE_OK;
 }
 
-uint8_t MINDSiDebugger::send(StampedControlMsg_t &msg)
+uint8_t MINDSiDebugger::send(StampedSteeringControllerMsg_t &msg)
 {
-    uint8_t output[STAMPED_CONTROL_MSG_LEN + 3 + 3];
+    uint8_t output[STAMPED_STEERING_CONTROLLER_MSG_LEN + 3 + 3];
 
     // header bytes
     output[0] = 0x51;
     output[1] = 0xAC;
 
     // length
-    output[2] = STAMPED_CONTROL_MSG_LEN + 3;
+    output[2] = STAMPED_STEERING_CONTROLLER_MSG_LEN + 3;
 
     // msg id
-    output[3] = STAMPED_CONTROL_MSG_ID;
+    output[3] = STAMPED_STEERING_CONTROLLER_MSG_ID;
 
     // timestamp
     output[4] = msg.timestamp & 0xFF;
@@ -1043,9 +1043,9 @@ uint8_t MINDSiDebugger::send(StampedControlMsg_t &msg)
     output[19] = int16_t(round(msg.crosstrackError * 100.0)) >> 8;
 
     // checksum
-    calc_checksum(output, STAMPED_CONTROL_MSG_LEN + 4);
+    calc_checksum(output, STAMPED_STEERING_CONTROLLER_MSG_LEN + 4);
 
-    Serial2.write(output, STAMPED_CONTROL_MSG_LEN + 3 + 3);
+    Serial2.write(output, STAMPED_STEERING_CONTROLLER_MSG_LEN + 3 + 3);
 
     return RETURN_CODE_OK;
 }

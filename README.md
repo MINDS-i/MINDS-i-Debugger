@@ -201,8 +201,8 @@ List of available message types.
 | 0x8A | StampedControlMsg_t |
 | 0x81 | WaypointMsg_t |
 | 0x8B | StampedWaypointMsg_t |
-| 0x82 | ControlMsg_t |
-| 0x8C | StampedControlMsg_t |
+| 0x82 | SteeringControllerMsg_t |
+| 0x8C | StampedSteeringControllerMsg_t |
 | 0xA0 | VersionMsg_t |
 | 0xAA | StampedVersionMsg_t |
 | 0x90 | AsciiMsg_t |
@@ -691,7 +691,7 @@ typedef struct {
 | 40-43 | lon_target.frac | -21474.8..21474.8 | 1e-05 | Current goal waypoint longitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
 | 44-45 | path_heading | -327.68..327.67 | 0.01 | Desired heading (deg) |
 
-#### Control Message (0x82)
+#### SteeringController Message (0x82)
 
 Debug output for steering controller
 
@@ -703,7 +703,7 @@ typedef struct {
     float kYaw;
     float headingError;
     float crosstrackError;
-} ControlMsg_t;
+} SteeringControllerMsg_t;
 ```
 
 | Byte Offset | Name | Range | Resolution | Description |
@@ -715,7 +715,7 @@ typedef struct {
 | 12-13 | heading_error | -327.68..327.67 | 0.01 | Heading error (deg) |
 | 14-15 | crosstrack_error | -327.68..327.67 | 0.01 | Crosstrack error (m) |
 
-#### StampedControl Message (0x8C)
+#### StampedSteeringController Message (0x8C)
 
 Debug output for steering controller
 
@@ -728,7 +728,7 @@ typedef struct {
     float kYaw;
     float headingError;
     float crosstrackError;
-} StampedControlMsg_t;
+} StampedSteeringControllerMsg_t;
 ```
 
 | Byte Offset | Name | Range | Resolution | Description |

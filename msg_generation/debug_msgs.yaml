@@ -307,7 +307,7 @@ debug_msgs:
         cast_type: int16_t
         mod_factor: 100.0
         description: 'Desired heading (deg)'
-  - name: control
+  - name: steering_controller
     id: '0x82'
     description: 'Debug output for steering controller'
     fields:
