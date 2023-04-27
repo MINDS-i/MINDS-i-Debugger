@@ -3,7 +3,7 @@ import math
 import numpy as np
 
 
-def wgs84_to_local_xy(lat, lon, lat0, lon0, alt0=0.0):
+def wgs84_to_local_xy(lat, lon, lat0, lon0, alt0=0.0, reference_heading=0.0):
     '''Convert  WGS84 lat/lon values into a local cartesian frame
 
     Args:
@@ -24,9 +24,9 @@ def wgs84_to_local_xy(lat, lon, lat0, lon0, alt0=0.0):
     lon = np.array(lon)
     earth_eccentricity = 0.08181919084261
     earth_equator_radius = 6378137.0
+    reference_heading = reference_heading * math.pi / 180.0
     reference_latitude = lat0 * math.pi / 180.0
     reference_longitude = lon0 * math.pi / 180.0
-    reference_heading=0.0
     cos_heading = math.cos(reference_heading)
     sin_heading = math.sin(reference_heading)
 
@@ -54,7 +54,7 @@ def wgs84_to_local_xy(lat, lon, lat0, lon0, alt0=0.0):
     return x, y
 
 
-def local_xy_to_wgs84(x, y, lat0, lon0, alt0=0.0):
+def local_xy_to_wgs84(x, y, lat0, lon0, alt0=0.0, reference_heading=0.0):
     '''Convert  local x/y cartesian points into WGS84 coordinates
 
     Args:
@@ -76,7 +76,7 @@ def local_xy_to_wgs84(x, y, lat0, lon0, alt0=0.0):
     y = np.array(y)
     earth_eccentricity = 0.08181919084261
     earth_equator_radius = 6378137.0
-    reference_heading = 0.0
+    reference_heading = reference_heading * math.pi / 180.0
     reference_latitude = lat0 * math.pi / 180.0
     reference_longitude = lon0 * math.pi / 180.0
     cos_heading = math.cos(reference_heading)
