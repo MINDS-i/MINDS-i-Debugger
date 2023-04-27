@@ -189,7 +189,7 @@ class Reader:
                         ('bot_lon', msg.longitude)])
                 elif msg_str.split('Stamped')[-1] == 'Orientation':  # Orientation or StampedOrientation
                     self.update_array([('bot_heading', msg.heading)])
-                elif msg_str.split('Stamped')[-1] == 'Control': # Control or StampedControl
+                elif msg_str.split('Stamped')[-1] == 'SteeringController': # SteeringController or StampedSteeringController
                     self.update_array([
                         ('sc_steering_angle', msg.sc_steering),
                         ('true_steering_angle', msg.true_steering),
