@@ -15,6 +15,7 @@ class DebugPlotter:
         self.lines.append((self.ax.arrow(0.0, 0.0, 0.0, 0.0, width=0.01, head_width=0.3, color='black', label='bot_sc_output'), 'black'))
         self.lines.append((self.ax.arrow(0.0, 0.0, 0.0, 0.0, width=0.01, head_width=0.3, color='green', label='path_heading'), 'green'))
         self.lines.append((self.ax.plot(0.0, 0.0, linewidth=2, color='red', label='path')[0], 'red'))
+        self.lines.append((self.ax.plot(0.0, 0.0, linewidth=2, color='red', label='goal_line')[0], 'red'))
         self.lines.append((self.ax.plot(0.0, 0.0, marker='o', markersize=5, color='black', label='target')[0], 'black'))
         self.label_to_lines = {p[0].get_label(): p[0] for p in self.lines}
         #self.ax.legend()
@@ -92,7 +93,8 @@ class DebugPlotter:
     def update(self, bot_lat, bot_lon, bot_heading,
                wp1_lat, wp1_lon, wp2_lat, wp2_lon,
                sc_steering_angle, true_steering_angle, path_heading,
-               heading_error, crosstrack_error):
+               heading_error, crosstrack_error,
+               goal_pt1_lat, goal_pt1_lon, goal_pt2_lat, goal_pt2_lon):
         # todo need a heading_lock or intialized flag to do this right
         if not self.initialized and (bot_lat == 0.0 and bot_lon == 0.0):
             self.fig.canvas.draw()
@@ -140,13 +142,18 @@ class DebugPlotter:
             dx=self.arrow_size*dx,
             dy=self.arrow_size*dy)
 
-        (wp1_x, wp2_x), (wp1_y, wp2_y) = wtu.wgs84_to_local_xy([wp1_lat, wp2_lat], [wp1_lon, wp2_lon],
-                                                                lat0=self.lat0, lon0=self.lon0, alt0=0.0)
+        (wp1_x, wp2_x, goal_pt1_x, goal_pt2_x), (wp1_y, wp2_y, goal_pt1_y, goal_pt2_y) = \
+            wtu.wgs84_to_local_xy([wp1_lat, wp2_lat, goal_pt1_lat, goal_pt2_lat], [wp1_lon, wp2_lon, goal_pt1_lon, goal_pt2_lon],
+                                  lat0=self.lat0, lon0=self.lon0, alt0=0.0)
         #print(f'bot_heading: {bot_heading} test: {math.atan2(wp2_x - wp1_x, wp2_y - wp1_y) * 180.0 / math.pi} path_heading: {path_heading} bearing: {bearing} heading_error: {heading_error} crosstrack_error: {crosstrack_error} sc: {sc_steering_angle} ts: {true_steering_angle}')
         #print(wp1_lat, wp1_lon)
         # update path plot
         self.label_to_lines['path'].set_xdata([wp1_x, wp2_x])
         self.label_to_lines['path'].set_ydata([wp1_y, wp2_y])
+
+        # update the goal line
+        self.label_to_lines['goal_line'].set_xdata([goal_pt1_x, goal_pt2_x])
+        self.label_to_lines['goal_line'].set_ydata([goal_pt1_y, goal_pt2_y])
 
         # update path heading_plot
         dx, dy = self.heading_deg_to_vector(path_heading)

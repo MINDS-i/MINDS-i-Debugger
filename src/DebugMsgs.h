@@ -61,9 +61,9 @@
 # define STAMPED_WAYPOINT_MSG_ID 0x8B
 # define STAMPED_WAYPOINT_MSG_LEN 42
 # define STEERING_CONTROLLER_MSG_ID 0x82
-# define STEERING_CONTROLLER_MSG_LEN 12
+# define STEERING_CONTROLLER_MSG_LEN 36
 # define STAMPED_STEERING_CONTROLLER_MSG_ID 0x8C
-# define STAMPED_STEERING_CONTROLLER_MSG_LEN 16
+# define STAMPED_STEERING_CONTROLLER_MSG_LEN 40
 # define VERSION_MSG_ID 0xA0
 # define VERSION_MSG_LEN 4
 # define STAMPED_VERSION_MSG_ID 0xAA
@@ -241,6 +241,10 @@ typedef struct {
     float kYaw;
     float headingError;
     float crosstrackError;
+    GpsAngle_t goalPt1Lat;
+    GpsAngle_t goalPt1Lon;
+    GpsAngle_t goalPt2Lat;
+    GpsAngle_t goalPt2Lon;
 } SteeringControllerMsg_t;
 
 typedef struct {
@@ -251,6 +255,10 @@ typedef struct {
     float kYaw;
     float headingError;
     float crosstrackError;
+    GpsAngle_t goalPt1Lat;
+    GpsAngle_t goalPt1Lon;
+    GpsAngle_t goalPt2Lat;
+    GpsAngle_t goalPt2Lon;
 } StampedSteeringControllerMsg_t;
 
 typedef struct {

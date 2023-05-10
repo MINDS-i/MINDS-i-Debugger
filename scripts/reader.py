@@ -60,7 +60,11 @@ ARRAY_FIELDS = [
     'true_steering_angle',
     'path_heading',
     'heading_error',
-    'crosstrack_error']
+    'crosstrack_error',
+    'goal_pt1_lat',
+    'goal_pt1_lon',
+    'goal_pt2_lat',
+    'goal_pt2_lon']
 ARRAY_FIELD_TO_IDX = {field: idx for idx, field in enumerate(ARRAY_FIELDS)}
 
 # runs on separate core
@@ -80,6 +84,10 @@ def update_plot(array, array_lock):
         path_heading = array[ARRAY_FIELD_TO_IDX['path_heading']]
         heading_error = array[ARRAY_FIELD_TO_IDX['heading_error']]
         crosstrack_error = array[ARRAY_FIELD_TO_IDX['crosstrack_error']]
+        goal_pt1_lat = array[ARRAY_FIELD_TO_IDX['goal_pt1_lat']]
+        goal_pt1_lon = array[ARRAY_FIELD_TO_IDX['goal_pt1_lon']]
+        goal_pt2_lat = array[ARRAY_FIELD_TO_IDX['goal_pt2_lat']]
+        goal_pt2_lon = array[ARRAY_FIELD_TO_IDX['goal_pt2_lon']]
         array_lock.release()
 
         debug_plotter.update(
@@ -94,7 +102,11 @@ def update_plot(array, array_lock):
             true_steering_angle=true_steering_angle,
             path_heading=path_heading,
             heading_error=heading_error,
-            crosstrack_error=crosstrack_error)
+            crosstrack_error=crosstrack_error,
+            goal_pt1_lat=goal_pt1_lat,
+            goal_pt1_lon=goal_pt1_lon,
+            goal_pt2_lat=goal_pt2_lat,
+            goal_pt2_lon=goal_pt2_lon)
 
         time.sleep(0.1) # plot updates around 10 Hz
 
@@ -194,7 +206,11 @@ class Reader:
                         ('sc_steering_angle', msg.sc_steering),
                         ('true_steering_angle', msg.true_steering),
                         ('heading_error', msg.heading_error),
-                        ('crosstrack_error', msg.crosstrack_error)])
+                        ('crosstrack_error', msg.crosstrack_error),
+                        ('goal_pt1_lat', msg.goal_pt1_lat),
+                        ('goal_pt1_lon', msg.goal_pt1_lon),
+                        ('goal_pt2_lat', msg.goal_pt2_lat),
+                        ('goal_pt2_lon', msg.goal_pt2_lon)])
                 elif msg_str.split('Stamped')[-1] == 'Waypoint': # Waypoint or StampedWaypoint
                     assert isinstance(msg, data_decoder.Waypoint)
                     self.update_array([

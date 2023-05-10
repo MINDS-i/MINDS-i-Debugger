@@ -28,8 +28,8 @@ def create_gpx(filename, prepend, lat0, lon0, reference_heading):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        prog = 'translate_mission',
-        description = 'Translates kml mission file(s) (KML path from from google earth) to/from Minds-I dashboard mission file(s)')
+        prog = 'generate_missions',
+        description = 'Creates Minds-I mission file(s) from a template')
     parser.add_argument('lat0', help='Starting latitude')
     parser.add_argument('lon0', help='Starting longitude')
     parser.add_argument('reference_heading', help='Reference Heading')
