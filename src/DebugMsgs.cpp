@@ -990,38 +990,6 @@ uint8_t MINDSiDebugger::send(SteeringControllerMsg_t &msg)
     output[14] = int16_t(round(msg.crosstrackError * 100.0)) & 0xFF;
     output[15] = int16_t(round(msg.crosstrackError * 100.0)) >> 8;
 
-    // goalPt1Lat
-    output[16] = msg.goalPt1Lat.minutes & 0xFF;
-    output[17] = msg.goalPt1Lat.minutes >> 8;
-    output[18] = int32_t(round(msg.goalPt1Lat.frac * 100000.0)) & 0xFF;
-    output[19] = int32_t(round(msg.goalPt1Lat.frac * 100000.0)) >> 8;
-    output[20] = int32_t(round(msg.goalPt1Lat.frac * 100000.0)) >> 16;
-    output[21] = int32_t(round(msg.goalPt1Lat.frac * 100000.0)) >> 24;
-
-    // goalPt1Lon
-    output[22] = msg.goalPt1Lon.minutes & 0xFF;
-    output[23] = msg.goalPt1Lon.minutes >> 8;
-    output[24] = int32_t(round(msg.goalPt1Lon.frac * 100000.0)) & 0xFF;
-    output[25] = int32_t(round(msg.goalPt1Lon.frac * 100000.0)) >> 8;
-    output[26] = int32_t(round(msg.goalPt1Lon.frac * 100000.0)) >> 16;
-    output[27] = int32_t(round(msg.goalPt1Lon.frac * 100000.0)) >> 24;
-
-    // goalPt2Lat
-    output[28] = msg.goalPt2Lat.minutes & 0xFF;
-    output[29] = msg.goalPt2Lat.minutes >> 8;
-    output[30] = int32_t(round(msg.goalPt2Lat.frac * 100000.0)) & 0xFF;
-    output[31] = int32_t(round(msg.goalPt2Lat.frac * 100000.0)) >> 8;
-    output[32] = int32_t(round(msg.goalPt2Lat.frac * 100000.0)) >> 16;
-    output[33] = int32_t(round(msg.goalPt2Lat.frac * 100000.0)) >> 24;
-
-    // goalPt2Lon
-    output[34] = msg.goalPt2Lon.minutes & 0xFF;
-    output[35] = msg.goalPt2Lon.minutes >> 8;
-    output[36] = int32_t(round(msg.goalPt2Lon.frac * 100000.0)) & 0xFF;
-    output[37] = int32_t(round(msg.goalPt2Lon.frac * 100000.0)) >> 8;
-    output[38] = int32_t(round(msg.goalPt2Lon.frac * 100000.0)) >> 16;
-    output[39] = int32_t(round(msg.goalPt2Lon.frac * 100000.0)) >> 24;
-
     // checksum
     calc_checksum(output, STEERING_CONTROLLER_MSG_LEN + 4);
 
@@ -1073,38 +1041,6 @@ uint8_t MINDSiDebugger::send(StampedSteeringControllerMsg_t &msg)
     // crosstrackError
     output[18] = int16_t(round(msg.crosstrackError * 100.0)) & 0xFF;
     output[19] = int16_t(round(msg.crosstrackError * 100.0)) >> 8;
-
-    // goalPt1Lat
-    output[20] = msg.goalPt1Lat.minutes & 0xFF;
-    output[21] = msg.goalPt1Lat.minutes >> 8;
-    output[22] = int32_t(round(msg.goalPt1Lat.frac * 100000.0)) & 0xFF;
-    output[23] = int32_t(round(msg.goalPt1Lat.frac * 100000.0)) >> 8;
-    output[24] = int32_t(round(msg.goalPt1Lat.frac * 100000.0)) >> 16;
-    output[25] = int32_t(round(msg.goalPt1Lat.frac * 100000.0)) >> 24;
-
-    // goalPt1Lon
-    output[26] = msg.goalPt1Lon.minutes & 0xFF;
-    output[27] = msg.goalPt1Lon.minutes >> 8;
-    output[28] = int32_t(round(msg.goalPt1Lon.frac * 100000.0)) & 0xFF;
-    output[29] = int32_t(round(msg.goalPt1Lon.frac * 100000.0)) >> 8;
-    output[30] = int32_t(round(msg.goalPt1Lon.frac * 100000.0)) >> 16;
-    output[31] = int32_t(round(msg.goalPt1Lon.frac * 100000.0)) >> 24;
-
-    // goalPt2Lat
-    output[32] = msg.goalPt2Lat.minutes & 0xFF;
-    output[33] = msg.goalPt2Lat.minutes >> 8;
-    output[34] = int32_t(round(msg.goalPt2Lat.frac * 100000.0)) & 0xFF;
-    output[35] = int32_t(round(msg.goalPt2Lat.frac * 100000.0)) >> 8;
-    output[36] = int32_t(round(msg.goalPt2Lat.frac * 100000.0)) >> 16;
-    output[37] = int32_t(round(msg.goalPt2Lat.frac * 100000.0)) >> 24;
-
-    // goalPt2Lon
-    output[38] = msg.goalPt2Lon.minutes & 0xFF;
-    output[39] = msg.goalPt2Lon.minutes >> 8;
-    output[40] = int32_t(round(msg.goalPt2Lon.frac * 100000.0)) & 0xFF;
-    output[41] = int32_t(round(msg.goalPt2Lon.frac * 100000.0)) >> 8;
-    output[42] = int32_t(round(msg.goalPt2Lon.frac * 100000.0)) >> 16;
-    output[43] = int32_t(round(msg.goalPt2Lon.frac * 100000.0)) >> 24;
 
     // checksum
     calc_checksum(output, STAMPED_STEERING_CONTROLLER_MSG_LEN + 4);

@@ -703,10 +703,6 @@ typedef struct {
     float kYaw;
     float headingError;
     float crosstrackError;
-    GpsAngle_t goalPt1Lat;
-    GpsAngle_t goalPt1Lon;
-    GpsAngle_t goalPt2Lat;
-    GpsAngle_t goalPt2Lon;
 } SteeringControllerMsg_t;
 ```
 
@@ -718,14 +714,6 @@ typedef struct {
 | 10-11 | k_yaw | -32.768..32.767 | 0.001 | Yaw error gain value |
 | 12-13 | heading_error | -327.68..327.67 | 0.01 | Heading error (deg) |
 | 14-15 | crosstrack_error | -327.68..327.67 | 0.01 | Crosstrack error (m) |
-| 16-17 | goal_pt1_lat.minutes | -32768..32767 | 1 | Latitude of the first goal point (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
-| 18-21 | goal_pt1_lat.frac | -21474.8..21474.8 | 1e-05 | Latitude of the first goal point (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
-| 22-23 | goal_pt1_lon.minutes | -32768..32767 | 1 | Longitude of the first goal point (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
-| 24-27 | goal_pt1_lon.frac | -21474.8..21474.8 | 1e-05 | Longitude of the first goal point (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
-| 28-29 | goal_pt2_lat.minutes | -32768..32767 | 1 | Latitude of the second goal point (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
-| 30-33 | goal_pt2_lat.frac | -21474.8..21474.8 | 1e-05 | Latitude of the second goal point (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
-| 34-35 | goal_pt2_lon.minutes | -32768..32767 | 1 | Longitude of the second goal point (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
-| 36-39 | goal_pt2_lon.frac | -21474.8..21474.8 | 1e-05 | Longitude of the second goal point (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
 
 #### StampedSteeringController Message (0x8C)
 
@@ -740,10 +728,6 @@ typedef struct {
     float kYaw;
     float headingError;
     float crosstrackError;
-    GpsAngle_t goalPt1Lat;
-    GpsAngle_t goalPt1Lon;
-    GpsAngle_t goalPt2Lat;
-    GpsAngle_t goalPt2Lon;
 } StampedSteeringControllerMsg_t;
 ```
 
@@ -756,14 +740,6 @@ typedef struct {
 | 14-15 | k_yaw | -32.768..32.767 | 0.001 | Yaw error gain value |
 | 16-17 | heading_error | -327.68..327.67 | 0.01 | Heading error (deg) |
 | 18-19 | crosstrack_error | -327.68..327.67 | 0.01 | Crosstrack error (m) |
-| 20-21 | goal_pt1_lat.minutes | -32768..32767 | 1 | Latitude of the first goal point (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
-| 22-25 | goal_pt1_lat.frac | -21474.8..21474.8 | 1e-05 | Latitude of the first goal point (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
-| 26-27 | goal_pt1_lon.minutes | -32768..32767 | 1 | Longitude of the first goal point (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
-| 28-31 | goal_pt1_lon.frac | -21474.8..21474.8 | 1e-05 | Longitude of the first goal point (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
-| 32-33 | goal_pt2_lat.minutes | -32768..32767 | 1 | Latitude of the second goal point (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
-| 34-37 | goal_pt2_lat.frac | -21474.8..21474.8 | 1e-05 | Latitude of the second goal point (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
-| 38-39 | goal_pt2_lon.minutes | -32768..32767 | 1 | Longitude of the second goal point (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
-| 40-43 | goal_pt2_lon.frac | -21474.8..21474.8 | 1e-05 | Longitude of the second goal point (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
 
 #### Version Message (0xA0)
 

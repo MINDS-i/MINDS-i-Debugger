@@ -185,10 +185,6 @@ class SteeringController:
     k_yaw: float
     heading_error: float
     crosstrack_error: float
-    goal_pt1_lat: float
-    goal_pt1_lon: float
-    goal_pt2_lat: float
-    goal_pt2_lon: float
 
 @dataclass(frozen=True)
 class StampedSteeringController:
@@ -199,10 +195,6 @@ class StampedSteeringController:
     k_yaw: float
     heading_error: float
     crosstrack_error: float
-    goal_pt1_lat: float
-    goal_pt1_lon: float
-    goal_pt2_lat: float
-    goal_pt2_lon: float
 
 @dataclass(frozen=True)
 class Version:
@@ -819,14 +811,6 @@ class DataDecoder:
             k_yaw = unpack('h', pack('BB', data[6], data[7]))[0] / 1000.0
             heading_error = unpack('h', pack('BB', data[8], data[9]))[0] / 100.0
             crosstrack_error = unpack('h', pack('BB', data[10], data[11]))[0] / 100.0
-            goal_pt1_lat_minutes = unpack('h', pack('BB', data[12], data[13]))[0]
-            goal_pt1_lat_frac = unpack('i', pack('BBBB', data[14], data[15], data[16], data[17]))[0] / 100000.0
-            goal_pt1_lon_minutes = unpack('h', pack('BB', data[18], data[19]))[0]
-            goal_pt1_lon_frac = unpack('i', pack('BBBB', data[20], data[21], data[22], data[23]))[0] / 100000.0
-            goal_pt2_lat_minutes = unpack('h', pack('BB', data[24], data[25]))[0]
-            goal_pt2_lat_frac = unpack('i', pack('BBBB', data[26], data[27], data[28], data[29]))[0] / 100000.0
-            goal_pt2_lon_minutes = unpack('h', pack('BB', data[30], data[31]))[0]
-            goal_pt2_lon_frac = unpack('i', pack('BBBB', data[32], data[33], data[34], data[35]))[0] / 100000.0
             print(
                 f"SteeringController",
                 f"sc_steering = {sc_steering:.2f}",
@@ -834,11 +818,7 @@ class DataDecoder:
                 f"k_crosstrack = {k_crosstrack:.4f}",
                 f"k_yaw = {k_yaw:.4f}",
                 f"heading_error = {heading_error:.2f}",
-                f"crosstrack_error = {crosstrack_error:.2f}",
-                f"goal_pt1_lat = {gps_angle_to_float(goal_pt1_lat_minutes, goal_pt1_lat_frac):.7f}",
-                f"goal_pt1_lon = {gps_angle_to_float(goal_pt1_lon_minutes, goal_pt1_lon_frac):.7f}",
-                f"goal_pt2_lat = {gps_angle_to_float(goal_pt2_lat_minutes, goal_pt2_lat_frac):.7f}",
-                f"goal_pt2_lon = {gps_angle_to_float(goal_pt2_lon_minutes, goal_pt2_lon_frac):.7f}")
+                f"crosstrack_error = {crosstrack_error:.2f}")
             self.outfile.write(
                 f"{msg_id:d}:"\
                 f"{sc_steering:.2f}:"\
@@ -846,11 +826,7 @@ class DataDecoder:
                 f"{k_crosstrack:.4f}:"\
                 f"{k_yaw:.4f}:"\
                 f"{heading_error:.2f}:"\
-                f"{crosstrack_error:.2f}:"\
-                f"{gps_angle_to_float(goal_pt1_lat_minutes, goal_pt1_lat_frac):.7f}:"\
-                f"{gps_angle_to_float(goal_pt1_lon_minutes, goal_pt1_lon_frac):.7f}:"\
-                f"{gps_angle_to_float(goal_pt2_lat_minutes, goal_pt2_lat_frac):.7f}:"\
-                f"{gps_angle_to_float(goal_pt2_lon_minutes, goal_pt2_lon_frac):.7f}\n")
+                f"{crosstrack_error:.2f}\n")
             return ('SteeringController',
                     SteeringController(
                         sc_steering,
@@ -858,11 +834,7 @@ class DataDecoder:
                         k_crosstrack,
                         k_yaw,
                         heading_error,
-                        crosstrack_error,
-                        gps_angle_to_float(goal_pt1_lat_minutes, goal_pt1_lat_frac),
-                        gps_angle_to_float(goal_pt1_lon_minutes, goal_pt1_lon_frac),
-                        gps_angle_to_float(goal_pt2_lat_minutes, goal_pt2_lat_frac),
-                        gps_angle_to_float(goal_pt2_lon_minutes, goal_pt2_lon_frac)))
+                        crosstrack_error))
         elif msg_id == int('0x8C', 16): # StampedSteeringControllerMsg_t
             timestamp = unpack('I', pack('BBBB', data[0], data[1], data[2], data[3]))[0]
             sc_steering = unpack('h', pack('BB', data[4], data[5]))[0] / 100.0
@@ -871,14 +843,6 @@ class DataDecoder:
             k_yaw = unpack('h', pack('BB', data[10], data[11]))[0] / 1000.0
             heading_error = unpack('h', pack('BB', data[12], data[13]))[0] / 100.0
             crosstrack_error = unpack('h', pack('BB', data[14], data[15]))[0] / 100.0
-            goal_pt1_lat_minutes = unpack('h', pack('BB', data[16], data[17]))[0]
-            goal_pt1_lat_frac = unpack('i', pack('BBBB', data[18], data[19], data[20], data[21]))[0] / 100000.0
-            goal_pt1_lon_minutes = unpack('h', pack('BB', data[22], data[23]))[0]
-            goal_pt1_lon_frac = unpack('i', pack('BBBB', data[24], data[25], data[26], data[27]))[0] / 100000.0
-            goal_pt2_lat_minutes = unpack('h', pack('BB', data[28], data[29]))[0]
-            goal_pt2_lat_frac = unpack('i', pack('BBBB', data[30], data[31], data[32], data[33]))[0] / 100000.0
-            goal_pt2_lon_minutes = unpack('h', pack('BB', data[34], data[35]))[0]
-            goal_pt2_lon_frac = unpack('i', pack('BBBB', data[36], data[37], data[38], data[39]))[0] / 100000.0
             print(
                 f"StampedSteeringController",
                 f"timestamp = {ms_to_s(timestamp):.3f}",
@@ -887,11 +851,7 @@ class DataDecoder:
                 f"k_crosstrack = {k_crosstrack:.4f}",
                 f"k_yaw = {k_yaw:.4f}",
                 f"heading_error = {heading_error:.2f}",
-                f"crosstrack_error = {crosstrack_error:.2f}",
-                f"goal_pt1_lat = {gps_angle_to_float(goal_pt1_lat_minutes, goal_pt1_lat_frac):.7f}",
-                f"goal_pt1_lon = {gps_angle_to_float(goal_pt1_lon_minutes, goal_pt1_lon_frac):.7f}",
-                f"goal_pt2_lat = {gps_angle_to_float(goal_pt2_lat_minutes, goal_pt2_lat_frac):.7f}",
-                f"goal_pt2_lon = {gps_angle_to_float(goal_pt2_lon_minutes, goal_pt2_lon_frac):.7f}")
+                f"crosstrack_error = {crosstrack_error:.2f}")
             self.outfile.write(
                 f"{msg_id:d}:"\
                 f"{ms_to_s(timestamp):.3f}:"\
@@ -900,11 +860,7 @@ class DataDecoder:
                 f"{k_crosstrack:.4f}:"\
                 f"{k_yaw:.4f}:"\
                 f"{heading_error:.2f}:"\
-                f"{crosstrack_error:.2f}:"\
-                f"{gps_angle_to_float(goal_pt1_lat_minutes, goal_pt1_lat_frac):.7f}:"\
-                f"{gps_angle_to_float(goal_pt1_lon_minutes, goal_pt1_lon_frac):.7f}:"\
-                f"{gps_angle_to_float(goal_pt2_lat_minutes, goal_pt2_lat_frac):.7f}:"\
-                f"{gps_angle_to_float(goal_pt2_lon_minutes, goal_pt2_lon_frac):.7f}\n")
+                f"{crosstrack_error:.2f}\n")
             return ('StampedSteeringController',
                     StampedSteeringController(
                         ms_to_s(timestamp),
@@ -913,11 +869,7 @@ class DataDecoder:
                         k_crosstrack,
                         k_yaw,
                         heading_error,
-                        crosstrack_error,
-                        gps_angle_to_float(goal_pt1_lat_minutes, goal_pt1_lat_frac),
-                        gps_angle_to_float(goal_pt1_lon_minutes, goal_pt1_lon_frac),
-                        gps_angle_to_float(goal_pt2_lat_minutes, goal_pt2_lat_frac),
-                        gps_angle_to_float(goal_pt2_lon_minutes, goal_pt2_lon_frac)))
+                        crosstrack_error))
         elif msg_id == int('0xA0', 16): # VersionMsg_t
             debug_major = unpack('B', pack('B', data[0]))[0]
             debug_minor = unpack('B', pack('B', data[1]))[0]
@@ -1318,11 +1270,7 @@ def read_log_dataline(dataline, print_line=False):
                 f"k_crosstrack = {float(data[3]):.4f}",
                 f"k_yaw = {float(data[4]):.4f}",
                 f"heading_error = {float(data[5]):.2f}",
-                f"crosstrack_error = {float(data[6]):.2f}",
-                f"goal_pt1_lat = {float(data[7]):.7f}",
-                f"goal_pt1_lon = {float(data[8]):.7f}",
-                f"goal_pt2_lat = {float(data[9]):.7f}",
-                f"goal_pt2_lon = {float(data[10]):.7f}")
+                f"crosstrack_error = {float(data[6]):.2f}")
         return ('SteeringController',
                 SteeringController(
                     float(data[1]), # sc_steering
@@ -1330,11 +1278,7 @@ def read_log_dataline(dataline, print_line=False):
                     float(data[3]), # k_crosstrack
                     float(data[4]), # k_yaw
                     float(data[5]), # heading_error
-                    float(data[6]), # crosstrack_error
-                    float(data[7]), # goal_pt1_lat
-                    float(data[8]), # goal_pt1_lon
-                    float(data[9]), # goal_pt2_lat
-                    float(data[10]))) # goal_pt2_lon
+                    float(data[6]))) # crosstrack_error
     elif int(data[0]) == int('0x8C', 16): # StampedSteeringControllerMsg_t
         if print_line:
             print(
@@ -1345,11 +1289,7 @@ def read_log_dataline(dataline, print_line=False):
                 f"k_crosstrack = {float(data[4]):.4f}",
                 f"k_yaw = {float(data[5]):.4f}",
                 f"heading_error = {float(data[6]):.2f}",
-                f"crosstrack_error = {float(data[7]):.2f}",
-                f"goal_pt1_lat = {float(data[8]):.7f}",
-                f"goal_pt1_lon = {float(data[9]):.7f}",
-                f"goal_pt2_lat = {float(data[10]):.7f}",
-                f"goal_pt2_lon = {float(data[11]):.7f}")
+                f"crosstrack_error = {float(data[7]):.2f}")
         return ('StampedSteeringController',
                 StampedSteeringController(
                     float(data[1]), # timestamp
@@ -1358,11 +1298,7 @@ def read_log_dataline(dataline, print_line=False):
                     float(data[4]), # k_crosstrack
                     float(data[5]), # k_yaw
                     float(data[6]), # heading_error
-                    float(data[7]), # crosstrack_error
-                    float(data[8]), # goal_pt1_lat
-                    float(data[9]), # goal_pt1_lon
-                    float(data[10]), # goal_pt2_lat
-                    float(data[11]))) # goal_pt2_lon
+                    float(data[7]))) # crosstrack_error
     elif int(data[0]) == int('0xA0', 16): # VersionMsg_t
         if print_line:
             print(

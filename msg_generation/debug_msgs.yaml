@@ -347,34 +347,6 @@ debug_msgs:
         mod_factor: 100.0
         num_format: '.2'
         description: 'Crosstrack error (m)'
-      - name: goal_pt1_lat
-        struct_type: GpsAngle_t
-        interpret:
-          type: float
-          func: gps_angle_to_float
-        num_format: '.7'
-        description: 'Latitude of the first goal point'
-      - name: goal_pt1_lon
-        struct_type: GpsAngle_t
-        interpret:
-          type: float
-          func: gps_angle_to_float
-        num_format: '.7'
-        description: 'Longitude of the first goal point'
-      - name: goal_pt2_lat
-        struct_type: GpsAngle_t
-        interpret:
-          type: float
-          func: gps_angle_to_float
-        num_format: '.7'
-        description: 'Latitude of the second goal point'
-      - name: goal_pt2_lon
-        struct_type: GpsAngle_t
-        interpret:
-          type: float
-          func: gps_angle_to_float
-        num_format: '.7'
-        description: 'Longitude of the second goal point'
   - name: version
     id: '0xA0'
     description: 'Version information.'
