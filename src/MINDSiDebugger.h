@@ -1,3 +1,4 @@
+// This file was auto-generated. Any changes to this file may be overwritten.
 /* Copyright 2021 MINDS-i, INC.
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,43 +17,43 @@
 #ifndef MINDSiDebugger_h
 #define MINDSiDebugger_h
 
-#define ASCII_ID 0x90
-
 #define RETURN_CODE_OK 1
 #define RETURN_CODE_ERR_ALLOC 2
 
 #include "Arduino.h"
 #include "Util.h"
-#include "AsciiMsgs.h"
-#include "PositionMsgs.h"
-#include "OrientationMsgs.h"
-#include "NavigationMsgs.h"
-#include "SensorMsgs.h"
-#include "StateMsgs.h"
-#include "RadioMsgs.h"
-#include "VersionMsgs.h"
+#include "DebugMsgs.h"
 
 class MINDSiDebugger {
   public:
     MINDSiDebugger();
     MINDSiDebugger(long buad);
-    uint8_t send(AsciiMsg_t msg);
-    uint8_t send(RawPositionMsg_t msg);
-    uint8_t send(ExtrapolatedPositionMsg_t msg);
-    uint8_t send(OrientationMsg_t msg);
-    uint8_t send(ControlMsg_t msg);
-    uint8_t send(WaypointMsg_t msg);
-    uint8_t send(ImuMsg_t msg);
-    uint8_t send(SonarMsg_t msg);
-    uint8_t send(BumperMsg_t msg);
-    uint8_t send(StateMsg_t msg);
-    uint8_t send(RadioMsg_t msg);
-    uint8_t send(VersionMsg_t msg);
-    int32_t lat_float_to_int32(float lat);
-    int32_t lon_float_to_int32(float lon);
-    uint16_t alt_float_to_uint16(float alt);
-    int32_t frac_float_to_int32(float frac);
-
+    uint8_t send(RawPositionMsg_t &msg);
+    uint8_t send(StampedRawPositionMsg_t &msg);
+    uint8_t send(ExtrapolatedPositionMsg_t &msg);
+    uint8_t send(StampedExtrapolatedPositionMsg_t &msg);
+    uint8_t send(OrientationMsg_t &msg);
+    uint8_t send(StampedOrientationMsg_t &msg);
+    uint8_t send(RadioMsg_t &msg);
+    uint8_t send(StampedRadioMsg_t &msg);
+    uint8_t send(ImuMsg_t &msg);
+    uint8_t send(StampedImuMsg_t &msg);
+    uint8_t send(SonarMsg_t &msg);
+    uint8_t send(StampedSonarMsg_t &msg);
+    uint8_t send(BumperMsg_t &msg);
+    uint8_t send(StampedBumperMsg_t &msg);
+    uint8_t send(StateMsg_t &msg);
+    uint8_t send(StampedStateMsg_t &msg);
+    uint8_t send(ControlMsg_t &msg);
+    uint8_t send(StampedControlMsg_t &msg);
+    uint8_t send(WaypointMsg_t &msg);
+    uint8_t send(StampedWaypointMsg_t &msg);
+    uint8_t send(SteeringControllerMsg_t &msg);
+    uint8_t send(StampedSteeringControllerMsg_t &msg);
+    uint8_t send(VersionMsg_t &msg);
+    uint8_t send(StampedVersionMsg_t &msg);
+    uint8_t send(AsciiMsg_t &msg);
+  
   private:
 };
 

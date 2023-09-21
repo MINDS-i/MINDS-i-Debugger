@@ -22,10 +22,6 @@
 #define RETURN_CODE_ERR_ALLOC 2
 
 
-static double lat_conv_factor = 23860929.4111111;
-static double lon_conv_factor = 11930464.7055556;
-static float alt_conv_factor = 3.2932160;
-
 const uint16_t crctable[256] =
 {
     0x0000, 0x1189, 0x2312, 0x329B, 0x4624, 0x57AD, 0x6536, 0x74BF,
@@ -61,16 +57,6 @@ const uint16_t crctable[256] =
     0x7787, 0x660E, 0x5495, 0x451C, 0x31A3, 0x202A, 0x12B1, 0x0338,
     0xFBCF, 0xEA46, 0xD8DD, 0xC954, 0xBDEB, 0xAC62, 0x9EF9, 0x8F70
 };
-
-typedef struct {
-	char data[256];
-  uint8_t len;
-}LenString_t;
-
-typedef struct {
-  int16_t minutes;
-  int32_t frac;
-}GpsAngle_t;
 
 void calc_checksum(uint8_t* ogi_cmd, uint8_t len);
 

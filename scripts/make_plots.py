@@ -1,5 +1,8 @@
+#!/usr/bin/env python 
+
 import argparse
 import matplotlib.pyplot as plt
+import data_decoder
 
 def main():    
     parser = argparse.ArgumentParser(description="Create a plots from a rover log.  Each plot will be \
@@ -26,23 +29,23 @@ def main():
             cnt5 = 0
             x_sonar=[]
             for line in fp:
-                words = line.strip().split(':')
-                if words[0] == '65':
+                msg_str, msg = data_decoder.read_log_dataline(line)
+                if msg_str.split('Stamped')[-1] == 'Sonar':
                     cnt5 +=1
                     x_sonar.append(cnt5)
-                    sonar_1.append(int(words[1]))                
-                    sonar_2.append(int(words[2]))                
-                    sonar_3.append(int(words[3]))                
-                    sonar_4.append(int(words[4]))                
-                    sonar_5.append(int(words[5]))                
+                    sonar_1.append(msg.ping1)                
+                    sonar_2.append(msg.ping2)                
+                    sonar_3.append(msg.ping3)                
+                    sonar_4.append(msg.ping4)                
+                    sonar_5.append(msg.ping5)                
 
         plt.clf()
-        plt.plot(x_sonar,sonar_1, label = "far left")
-        plt.plot(x_sonar,sonar_2, label = "mid left")
-        plt.plot(x_sonar,sonar_3, label = "front")
-        plt.plot(x_sonar,sonar_4, label = "mid right")
-        plt.plot(x_sonar,sonar_5, label = "far right")
-        plt.xlim(-5,cnt5+20)
+        plt.plot(x_sonar, sonar_1, label="far left")
+        plt.plot(x_sonar, sonar_2, label="mid left")
+        plt.plot(x_sonar, sonar_3, label="front")
+        plt.plot(x_sonar, sonar_4, label="mid right")
+        plt.plot(x_sonar, sonar_5, label="far right")
+        plt.xlim(-5, cnt5 + 20)
         plt.legend()
         plt.savefig("sonar_plot.png")
 
@@ -53,14 +56,14 @@ def main():
             cnt6 = 0
             x_steer=[]
             for line in fp:
-                words = line.strip().split(':')
-                if words[0] == '128':
+                msg_str, msg = data_decoder.read_log_dataline(line)
+                if msg_str.split('Stamped')[-1] == 'Control':
                     cnt6 +=1
                     x_steer.append(cnt6)
-                    steering.append(int(words[2]))                
+                    steering.append(msg.steering)                
 
         plt.clf()
-        plt.plot(x_steer,steering)
+        plt.plot(x_steer, steering)
         plt.savefig("steering_plot.png")
     
 if __name__ == '__main__':

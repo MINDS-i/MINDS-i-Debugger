@@ -1,0 +1,109 @@
+# This file was auto-generated. Any changes to this file may be overwritten.
+
+from dataclasses import dataclass
+from struct import pack, unpack
+
+{% for custom_type_name, fields in custom_types.items() %}
+@dataclass(frozen=True)
+class {{ custom_type_name|get_python_type }}:
+    {% for field in fields %}
+    {{ field['name'] }}: {{ field.get('interpret', {}).get('type', field['struct_type'])|get_python_type }}
+    {% endfor %}
+
+{% endfor %}
+@dataclass(frozen=True)
+class LenString:
+    data: list
+    len: int
+
+{% for debug_msg in debug_msgs %}
+@dataclass(frozen=True)
+class {{ debug_msg['name']|to_camel_case(first=True) }}:
+    {% for field in debug_msg['fields'] %}
+    {{ field['name'] }}: {{ field.get('interpret', {}).get('type', field['struct_type'])|get_python_type }}
+    {% endfor %}
+
+{% endfor %}
+@dataclass(frozen=True)
+class Ascii:
+    ascii: str
+
+def gps_angle_to_float(min, frac):
+    deg = min / 60.0
+    min_deg = (min - (deg * 60.0) + frac) / 60.0
+    return deg + min_deg;        
+
+def ms_to_s(ms):
+    return ms / 1000.0
+
+class DataDecoder:
+    def __init__(self, outfile):
+        self.outfile = outfile
+        
+    def decode_data(self, data, msg_id, pkt_len):
+{% for debug_msg in debug_msgs %}
+        {%+ if loop.index == 1%}if{% else %}elif{% endif %} msg_id == int('{{ debug_msg['id'] }}', 16): # {{ debug_msg['name']|to_camel_case(first=True) }}Msg_t
+    {% set cur_idx = namespace(value=0) %}
+    {% for field in debug_msg['fields'] %}
+        {% for base_field in field|get_base_types %}
+    {% set unpack_str, pack_str, type_size = base_field.get('cast_type', base_field['struct_type'])|get_struct_format %}
+            {{ base_field['name'] }} = unpack('{{ unpack_str }}', pack('{{ pack_str }}'{% for data_idx in range(cur_idx.value, cur_idx.value + type_size) %}, data[{{ data_idx }}]{% endfor %}))[0]{% if 'mod_factor' in base_field%} / {{ base_field['mod_factor']}}{% endif %}{% if 'mod_offset' in base_field %} - {{ base_field['mod_offset'] }}{% endif +%}
+        {% set cur_idx.value = cur_idx.value + type_size %}
+        {% endfor %}
+    {% endfor %}
+            print(
+                f"{{ debug_msg['name']|to_camel_case(first=True) }}",
+    {% for field in debug_msg['fields'] %}
+                f"{{ field['name'] }} = {{ field|get_print_format|join(', ') }}{% if loop.index == loop.length %}"){% else %}",{% endif +%}
+    {% endfor %}
+            self.outfile.write(
+                f"{{ '{msg_id:d}:' }}"\
+    {% for field in debug_msg['fields'] %}
+                f"{{ field|get_print_format|join(':') }}{% if loop.index == loop.length %}\n"){% else %}:"\{% endif +%}
+    {% endfor %}
+            return ('{{ debug_msg['name']|to_camel_case(first=True) }}',
+                    {{ debug_msg['name']|to_camel_case(first=True) }}(
+    {% for field in debug_msg['fields'] %}
+                        {{ field|get_interpreted_value }}{% if loop.index == loop.length %})){% else %},{% endif +%}
+    {% endfor %}
+{% endfor %}
+        elif msg_id == int('0x90', 16): # AsciiMsg_t
+            ascii = data[:pkt_len - 3]
+            print('Ascii: {0!s}'.format(ascii.decode()))
+            self.outfile.write("{:d}:{!s}\n".format(msg_id, ascii.decode()))
+            return ('Ascii', Ascii(ascii.decode()))
+        else:
+            print(f'Unknown Msg type recieved: {msg_id:d}')
+            return ('Unknown', None)
+        
+        self.outfile.flush()
+
+def read_log_dataline(dataline, print_line=False):
+    data = dataline.strip().split(':')
+{% for debug_msg in debug_msgs %}
+    {%+ if loop.index == 1%}if{% else %}elif{% endif %} int(data[0]) == int('{{ debug_msg['id'] }}', 16): # {{ debug_msg['name']|to_camel_case(first=True) }}Msg_t
+        if print_line:
+            print(
+                f"{{ debug_msg['name']|to_camel_case(first=True) }}",
+    {% set idx = namespace(value=1) %}
+    {% for field in debug_msg['fields'] %}
+        {% set cur_idx, val = field|get_print_from_log_format(data_name='data', idx=idx.value) %}
+        {% set idx.value = cur_idx %}
+                f"{{ field['name'] }} = {{ val }}"{% if loop.index == loop.length %}){% else %},{% endif +%}
+    {% endfor %}
+        return ('{{ debug_msg['name']|to_camel_case(first=True) }}',
+                {{ debug_msg['name']|to_camel_case(first=True) }}(
+    {% set idx = namespace(value=1) %}
+    {% for field in debug_msg['fields'] %}
+        {% set cur_idx, val = field|get_interpreted_log_format(data_name='data', idx=idx.value) %}
+        {% set idx.value = cur_idx %}
+                    {{ val }}{% if loop.index == loop.length %})){% else %},{% endif +%} # {{ field['name'] }}
+    {% endfor %}
+{% endfor %}
+    elif int(data[0]) == int('0x90', 16): # AsciiMsg_t
+        if print_line:
+            print("Ascii", f"ascii = {':'.join(data[1:])}")
+        return ('Ascii', Ascii(':'.join(data[1:])))
+    else:
+        print(f'Unknown Msg type read: {int(data[0]):d}')
+        return ('Unknown', None)

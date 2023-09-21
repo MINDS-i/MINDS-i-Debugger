@@ -1,6 +1,9 @@
+#!/usr/bin/env python 
+
 import argparse
 import simplekml
 import matplotlib.pyplot as plt
+import data_decoder
 
 def main():    
     parser = argparse.ArgumentParser(description="Create a KML files from a rover log. Each KML will be \
@@ -36,12 +39,12 @@ def main():
         with open(args.filepath) as fp:
             cnt = 0
             for line in fp:
-                words = line.strip().split(':')
-                if words[0] == '16' and (old_lat != words[1] or old_lon != words[2]):
+                msg_str, msg = data_decoder.read_log_dataline(line)
+                if msg_str.split('Stamped')[-1] == 'RawPosition' and (old_lat != msg.latitude or old_lon != msg.longitude):
                     cnt += 1
-                    points.append((float(words[2]),float(words[1])))
-                    old_lat = words[1]
-                    old_lon = words[2]
+                    points.append((msg.longitude, msg.latitude))
+                    old_lat = msg.latitude
+                    old_lon = msg.longitude
 
         ls.coords = points
         kml_path.save(args.filepath.rsplit(".",1)[0] + "_path.kml")
@@ -54,12 +57,12 @@ def main():
         with open(args.filepath) as fp:
             cnt = 0
             for line in fp:
-                words = line.strip().split(':')
-                if words[0] == '16' and (old_lat != words[1] or old_lon != words[2]):
+                msg_str, msg = data_decoder.read_log_dataline(line)
+                if msg_str.split('Stamped')[-1] == 'RawPosition' and (old_lat != msg.latitude or old_lon != msg.longitude):
                     cnt += 1
-                    kml_points.newpoint(name="P"+str(cnt), coords=[(float(words[2]),float(words[1]))])
-                    old_lat = words[1]
-                    old_lon = words[2]
+                    kml_points.newpoint(name=f"P{str(cnt)}", coords=[(msg.longitude, msg.latitude)])
+                    old_lat = msg.latitude
+                    old_lon = msg.longitude
         kml_points.save(args.filepath.rsplit(".",1)[0] + "_points.kml")
 
     # Create a KML file for extrapolated points
@@ -80,18 +83,18 @@ def main():
             x_sonar=[]
             x_steer=[]
             for line in fp:
-                words = line.strip().split(':')
-                if words[0] == '16' and (old_lat != words[1] or old_lon != words[2]):
+                msg_str, msg = data_decoder.read_log_dataline(line)
+                if msg_str.split('Stamped')[-1] == 'RawPosition' and (old_lat != msg.latitude or old_lon != msg.longitude):
                     cnt2 = 0
                     cnt += 1
-                    old_lat = words[1]
-                    old_lon = words[2]
-                elif words[0] == '17' and (old_e_lat != words[1] or old_e_lon != words[2]) and (old_lat != words[1] or old_lon != words[2]):
+                    old_lat = msg.latitude
+                    old_lon = msg.longitude
+                elif msg_str.split('Stamped')[-1] == 'ExtrapolatedPosition' and (old_e_lat != msg.latitude or old_e_lon != msg.longitude) and (old_lat != msg.latitude or old_lon != msg.longitude):
                     cnt2 += 1
-                    pnt = kml_extrap.newpoint(name="P"+str(cnt)+"_"+str(cnt2), coords=[(float(words[2]),float(words[1]))])
+                    pnt = kml_extrap.newpoint(name=f"P{str(cnt)}_{str(cnt2)}", coords=[(msg.longitude, msg.longitude)])
                     pnt.style.iconstyle.color = simplekml.Color.red
-                    old_e_lat = words[1]
-                    old_e_lon = words[2]
+                    old_e_lat = msg.latitude
+                    old_e_lon = msg.longitude
         kml_extrap.save(args.filepath.rsplit(".",1)[0] + "_extrap.kml")
 
     # Create a KML file for headings to next waypoints
@@ -106,17 +109,17 @@ def main():
             cnt = 0
             cnt3 = 0
             for line in fp:
-                words = line.strip().split(':')
-                if words[0] == '16' and (old_lat != words[1] or old_lon != words[2]):
+                msg_str, msg = data_decoder.read_log_dataline(line)
+                if msg_str.split('Stamped')[-1] == 'RawPosition' and (old_lat != msg.latitude or old_lon != msg.longitude):
                     cnt3 = 0
                     cnt += 1
-                    old_lat = words[1]
-                    old_lon = words[2]
-                elif words[0] == '129' and (old_h_lat != old_lat or old_h_lon != old_lon):
+                    old_lat = msg.latitude
+                    old_lon = msg.longitude
+                elif msg_str.split('Stamped')[-1] == 'Waypoint' and (old_h_lat != old_lat or old_h_lon != old_lon):
                     cnt3 += 1
-                    pnt = kml_path_heading_pts.newpoint(name="P"+str(cnt)+"_"+str(cnt3), coords=[(float(old_lon),float(old_lat))])
+                    pnt = kml_path_heading_pts.newpoint(name=f"P{str(cnt)}_{str(cnt3)}", coords=[(old_lon, old_lat)])
                     pnt.style.iconstyle.icon.href = 'http://maps.google.com/mapfiles/kml/shapes/arrow.png'
-                    heading = float(words[7])+180.0 #add 180 because icon naturally points down
+                    heading = msg.path_heading + 180.0 # add 180 because icon naturally points down
                     if heading > 360:
                         heading += -360
                     pnt.style.iconstyle.heading = heading                 
@@ -134,17 +137,17 @@ def main():
             cnt = 0
             cnt4 = 0
             for line in fp:
-                words = line.strip().split(':')
-                if words[0] == '16' and (old_lat != words[1] or old_lon != words[2]):
+                msg_str, msg = data_decoder.read_log_dataline(line)
+                if msg_str.split('Stamped')[-1] == 'RawPosition' and (old_lat != msg.latitude or old_lon != msg.longitude):
                     cnt4 = 0
                     cnt += 1
-                    old_lat = words[1]
-                    old_lon = words[2]
-                elif words[0] == '32' and old_lat != '' and old_lon != '':
+                    old_lat = msg.latitude
+                    old_lon = msg.longitude
+                elif msg_str.split('Stamped')[-1] == 'Orientation' and old_lat != '' and old_lon != '':
                     cnt4 += 1
-                    pnt = kml_rover_heading_pts.newpoint(name="P"+str(cnt)+"_"+str(cnt4), coords=[(float(old_lon),float(old_lat))])
+                    pnt = kml_rover_heading_pts.newpoint(name=f"P{str(cnt)}_{str(cnt4)}", coords=[(old_lon, old_lat)])
                     pnt.style.iconstyle.icon.href = 'http://maps.google.com/mapfiles/kml/shapes/arrow.png'
-                    heading = float(words[1])+180.0 #add 180 because icon naturally points down
+                    heading = float(msg.heading) + 180.0 # add 180 because icon naturally points down
                     if heading > 360:
                         heading += -360
                     pnt.style.iconstyle.heading = heading                 
@@ -159,12 +162,12 @@ def main():
         with open(args.filepath) as fp:
             cnt = 0
             for line in fp:
-                words = line.strip().split(':')
-                if words[0] == '129' and (old_lat != words[3] or old_lon != words[4]) and words[4] != '0.0000000':
+                msg_str, msg = data_decoder.read_log_dataline(line)
+                if msg_str.split('Stamped')[-1] == 'Waypoint' and (old_lat != msg.lat_intermediate or old_lon != msg.lon_intermediate) and msg.lon_intermediate != '0.0000000':
                     cnt += 1
-                    kml_intermediate.newpoint(name="P"+str(cnt), coords=[(float(words[4]),float(words[3]))])
-                    old_lat = words[3]
-                    old_lon = words[4]
+                    kml_intermediate.newpoint(name=f"P{str(cnt)}", coords=[(msg.lon_intermediate, msg.lat_intermediate)])
+                    old_lat = msg.lat_intermediate
+                    old_lon = msg.lon_intermediate
 
         kml_intermediate.save(args.filepath.rsplit(".",1)[0] + "_intermediate.kml")
     

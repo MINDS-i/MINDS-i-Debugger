@@ -1,3 +1,4 @@
+// This file was auto-generated. Any changes to this file may be overwritten.
 /* Copyright 2021 MINDS-i, INC.
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +14,26 @@
    limitations under the License.
 */
 
-#ifndef VersionMsgs_h
-#define VersionMsgs_h
+#ifndef MINDSiDebugger_h
+#define MINDSiDebugger_h
+
+#define RETURN_CODE_OK 1
+#define RETURN_CODE_ERR_ALLOC 2
 
 #include "Arduino.h"
+#include "Util.h"
+#include "DebugMsgs.h"
 
-# define VERSION_MSG_ID 0x30
-# define VERSION_MSG_LEN 4
-
-typedef struct {
-    uint8_t debug_major;
-    uint8_t debug_minor;
-    uint8_t apm_major;
-    uint8_t apm_minor;
-}VersionMsg_t;
+class MINDSiDebugger {
+  public:
+    MINDSiDebugger();
+    MINDSiDebugger(long buad);
+{% for debug_msg in debug_msgs %}
+    uint8_t send({{ debug_msg['name']|to_camel_case(first=True) }}Msg_t &msg);
+{% endfor %}
+    uint8_t send(AsciiMsg_t &msg);
+  
+  private:
+};
 
 #endif

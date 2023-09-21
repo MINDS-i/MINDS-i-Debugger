@@ -5,7 +5,118 @@ This library contains code for providing logging and debugging msgs on a dedicat
 
 ## Usage
 
-To be filled out.
+### Sending Messages
+
+In the main program file include the required debugger headers.
+
+``` cpp
+#include <MINDSiDebugger.h>
+#include <DebugMsgs.h>
+#include <Util.h>
+```
+
+Create a debugger instance
+
+``` cpp
+#ifdef M_DEBUG
+  #include "MINDSiDebugger.h"
+  MINDSiDebugger debugger;
+#endif
+```
+
+Create a message and send it anywhere you want to send a message (sending messages in fast running loops can slow down the loop and hinder performance)
+
+
+``` cpp
+#ifdef M_DEBUG
+	// Logger Msg
+	RawPositionMsg_t msg;
+	GPS_ANGLE loc_lat = location.angLatitude();
+	GPS_ANGLE loc_lon = location.angLongitude();
+	msg.latitude.minutes = loc_lat.minutes;
+	msg.latitude.frac = loc_lat.frac;
+	msg.longitude.minutes = loc_lon.minutes;
+	msg.longitude.frac = loc_lon.frac;
+	msg.altitude = 0.0;
+	debugger.send(msg);
+#endif
+```
+
+### Receiving Messages
+
+Receive messages by running the reader (specifying port and output file). Optionally, a live view of the robot can be viewed by secifying the live plotter flag (see the usage output)
+
+```
+./scripts/reader.py -h
+```
+
+## Creating/Modifying Debug Messages
+
+The debug messages are auto generated using the message generation script. Editing the [debug_msgs.yaml](./msg_generation/debug_msgs.yaml) file and re-running the message generation script will allow you to create and modify debug messages.
+
+### YAML configuration file
+
+All debug messages are described in the follwing way:
+
+#### Built In Types
+
+These are the native types and sizes and associated with the target platform
+
+``` yaml
+'char': 1
+'int8_t': 1
+'uint8_t': 1
+'int16_t': 2
+'uint16_t': 2
+'int32_t': 4
+'uint32_t': 4
+'float': 4
+```
+
+#### Custom Types
+
+These the custom types that messages can use to describe more complicated fields
+
+``` yaml
+<custom_type_name>:
+    # list of fields
+    - name: <field_name>
+        struct_type: <struct_type> # can be custom type or built in type
+        cast_type: <cast_type> # optional - built in integer type to cast the value to before sending (needed for float struct types)
+        mod_factor: <value> # optional - value to scale the field by before casting to <cast_type>
+        mod_offset: <value> # optional - value to add to the field (occurs before <mod_factor> if specified) before casting to <cast_type>
+        description: <string> # optional - description of the field for this README
+```
+
+#### Debug Messages
+
+These are debug messages that can be sent from the platform
+
+``` yaml
+  - name: <debug_msg_name>:
+    id: <hex_msg_id> # a unique (checked at generation time) hex identifier
+    description: '<string>' # description of the message for this README
+    fields:
+      # list of fields
+      - name: <field_name>
+        struct_type: <struct_type> # can be custom type or built in type
+        cast_type: <cast_type> # optional - built in integer type to cast the value to before sending (needed for float struct types)
+        mod_factor: <value> # optional - value to scale the field by before casting to <cast_type>
+        mod_offset: <value> # optional - value to add to the field (occurs before <mod_factor> if specified) before casting to <cast_type>
+            interpret: # optional - usually used for custom types
+                type: <python_type> # type hint for the python reader to display the message field
+                func: <func> # function to create a value from this type (custom functions can be defined in the template for data_decoder.py)
+        num_format: <string> # optional - python f string format string to format the field (usually to specify digits or alignment)
+        description: <string> # optional - description of the field for this README
+```
+
+### Generating the debug messages
+
+Run the message generation script once you've edited the configuration file. By default a stamped message will be created for each message type, but this can be disabled (see the usage output)
+
+```
+./msg_generation/generate_debug_msgs.py -h
+```
 
 ## Packet Structure
 
@@ -70,252 +181,617 @@ List of available message types.
 
 | Type ID | Name | 
 | ------------ | ------------- |
-| 0x10 | Raw Position | 
-| 0x11 | Extrapolated Position | 
-| 0x20 | Orientation | 
-| 0x30 | Radio |
-| 0x40 | IMU |
-| 0x41 | Sonar |
-| 0x42 | Bumper |
-| 0x60 | State | 
-| 0x70 | Configuration |
-| 0x80 | Control |
-| 0x81 | Waypoint |
-| 0x90 | ASCII |
-| 0xA0 | Version |
+| 0x10 | RawPositionMsg_t |
+| 0x1A | StampedRawPositionMsg_t |
+| 0x11 | ExtrapolatedPositionMsg_t |
+| 0x1B | StampedExtrapolatedPositionMsg_t |
+| 0x20 | OrientationMsg_t |
+| 0x2A | StampedOrientationMsg_t |
+| 0x30 | RadioMsg_t |
+| 0x3A | StampedRadioMsg_t |
+| 0x40 | ImuMsg_t |
+| 0x4A | StampedImuMsg_t |
+| 0x41 | SonarMsg_t |
+| 0x4B | StampedSonarMsg_t |
+| 0x42 | BumperMsg_t |
+| 0x4C | StampedBumperMsg_t |
+| 0x60 | StateMsg_t |
+| 0x6A | StampedStateMsg_t |
+| 0x80 | ControlMsg_t |
+| 0x8A | StampedControlMsg_t |
+| 0x81 | WaypointMsg_t |
+| 0x8B | StampedWaypointMsg_t |
+| 0x82 | SteeringControllerMsg_t |
+| 0x8C | StampedSteeringControllerMsg_t |
+| 0xA0 | VersionMsg_t |
+| 0xAA | StampedVersionMsg_t |
+| 0x90 | AsciiMsg_t |
 
 ## Custom Data Types
 
-```
+``` cpp
 typedef struct {
-	char data[256];
-	u8 len;
-}LenString_t;
+    int16_t minutes;
+    float frac;
+} GpsAngle_t;
 
 typedef struct {
-  int16_t minutes;
-  int32_t frac;
-}GpsAngle_t;
+    char data[256];
+    uint8_t len;
+} LenString_t;
 ```
 
 ## Message Definitions
 
-#### Raw Position Message (0x10)
+#### RawPosition Message (0x10)
 
 Positioning information being provided by the GPS sensor.
 
-```
+``` cpp
 typedef struct {
-	GpsAngle_t latitude;
-	GpsAngle_t longitude;
-	u16 altitude;
-}RawPositionMsg_t;
+    GpsAngle_t latitude;
+    GpsAngle_t longitude;
+    float altitude;
+} RawPositionMsg_t;
 ```
 
-| Byte Offset | Name | Description | 
-| ------------ | ------------- | ------------- |
-| 4-5 | latitude_minutes | GPS reciever reported latitude (degrees and nondecimal minutes).  Specifically DDDMM of the DDDMM.MMMMM NMEA string |
-| 6-9 | latitude_frac | GPS reciever reported latitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
-| 10-11 | longitude_minutes | GPS reciever reported longitude (degrees and nondecimal minutes).  Specifically DDDMM of the DDDMM.MMMMM NMEA string |
-| 12-15 | longitude_frac | GPS reciever reported longitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
-| 16-17 | altitude | GPS reciever reported altitude (meters). Map `0..(2^16-1) to - 900..19000`, resolution ~0.3m |
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-5 | latitude.minutes | -32768..32767 | 1 | GPS reciever reported latitude (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 6-9 | latitude.frac | -21474.8..21474.8 | 1e-05 | GPS reciever reported latitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 10-11 | longitude.minutes | -32768..32767 | 1 | GPS reciever reported longitude (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 12-15 | longitude.frac | -21474.8..21474.8 | 1e-05 | GPS reciever reported longitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 16-17 | altitude | -900.0..19000.3 | 0.304 | GPS reciever reported altitude (m) |
 
-#### Extrapolated Position Message (0x11)
+#### StampedRawPosition Message (0x1A)
+
+Positioning information being provided by the GPS sensor.
+
+``` cpp
+typedef struct {
+    uint32_t timestamp;
+    GpsAngle_t latitude;
+    GpsAngle_t longitude;
+    float altitude;
+} StampedRawPositionMsg_t;
+```
+
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-7 | timestamp | 0..4294967296 | 1 | Arduino time (ms) when the message was created |
+| 8-9 | latitude.minutes | -32768..32767 | 1 | GPS reciever reported latitude (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 10-13 | latitude.frac | -21474.8..21474.8 | 1e-05 | GPS reciever reported latitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 14-15 | longitude.minutes | -32768..32767 | 1 | GPS reciever reported longitude (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 16-19 | longitude.frac | -21474.8..21474.8 | 1e-05 | GPS reciever reported longitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 20-21 | altitude | -900.0..19000.3 | 0.304 | GPS reciever reported altitude (m) |
+
+#### ExtrapolatedPosition Message (0x11)
 
 Position information created through calculation rather than sensed directly.
 
-```
+``` cpp
 typedef struct {
-	GpsAngle_t latitude;
-	GpsAngle_t longitude;
-	u16 altitude;
-}ExtrapolatedPositionMsg_t;
+    GpsAngle_t latitude;
+    GpsAngle_t longitude;
+    float altitude;
+} ExtrapolatedPositionMsg_t;
 ```
 
-| Byte Offset | Name | Description | 
-| ------------ | ------------- | ------------- |
-| 4-5 | latitude_minutes | GPS reciever reported latitude (degrees and nondecimal minutes).  Specifically DDDMM of the DDDMM.MMMMM NMEA string |
-| 6-9 | latitude_frac | GPS reciever reported latitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
-| 10-11 | longitude_minutes | GPS reciever reported longitude (degrees and nondecimal minutes).  Specifically DDDMM of the DDDMM.MMMMM NMEA string |
-| 12-15 | longitude_frac | GPS reciever reported longitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
-| 12-13 | altitude | Altitude extraploated between GPS readings (meters). Map `0..(2^16-1) to - 900..19000`, resolution ~0.3m |
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-5 | latitude.minutes | -32768..32767 | 1 | GPS reciever reported latitude (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 6-9 | latitude.frac | -21474.8..21474.8 | 1e-05 | GPS reciever reported latitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 10-11 | longitude.minutes | -32768..32767 | 1 | GPS reciever reported longitude (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 12-15 | longitude.frac | -21474.8..21474.8 | 1e-05 | GPS reciever reported longitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 16-17 | altitude | -900.0..19000.3 | 0.304 | Altitude extraploated between GPS readings (m) |
+
+#### StampedExtrapolatedPosition Message (0x1B)
+
+Position information created through calculation rather than sensed directly.
+
+``` cpp
+typedef struct {
+    uint32_t timestamp;
+    GpsAngle_t latitude;
+    GpsAngle_t longitude;
+    float altitude;
+} StampedExtrapolatedPositionMsg_t;
+```
+
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-7 | timestamp | 0..4294967296 | 1 | Arduino time (ms) when the message was created |
+| 8-9 | latitude.minutes | -32768..32767 | 1 | GPS reciever reported latitude (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 10-13 | latitude.frac | -21474.8..21474.8 | 1e-05 | GPS reciever reported latitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 14-15 | longitude.minutes | -32768..32767 | 1 | GPS reciever reported longitude (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 16-19 | longitude.frac | -21474.8..21474.8 | 1e-05 | GPS reciever reported longitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 20-21 | altitude | -900.0..19000.3 | 0.304 | Altitude extraploated between GPS readings (m) |
 
 #### Orientation Message (0x20)
 
 Orientation information used for control puposes.
 
-```
+``` cpp
 typedef struct {
-	s16 heading;
-	s16 roll;
-	s16 pitch;
-}OrientationMsg_t;
+    float heading;
+    float roll;
+    float pitch;
+} OrientationMsg_t;
 ```
 
-| Byte Offset | Name | Description | 
-| ------------ | ------------- | ------------- |
-| 4-5 | heading | True heading (deg) * 100, range -18000..18000 representing -180.00 to 180.00 |
-| 6-7 | roll | Roll (deg) * 100, range -18000..18000 representing -180.00 to 180.00 |
-| 8-9 | pitch | Pitch (deg) * 100, range -18000..18000 representing -180.00 to 180.00 |
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-5 | heading | -327.68..327.67 | 0.01 | Heading (deg) |
+| 6-7 | roll | -327.68..327.67 | 0.01 | Roll (deg) |
+| 8-9 | pitch | -327.68..327.67 | 0.01 | Pitch (deg) |
+
+#### StampedOrientation Message (0x2A)
+
+Orientation information used for control puposes.
+
+``` cpp
+typedef struct {
+    uint32_t timestamp;
+    float heading;
+    float roll;
+    float pitch;
+} StampedOrientationMsg_t;
+```
+
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-7 | timestamp | 0..4294967296 | 1 | Arduino time (ms) when the message was created |
+| 8-9 | heading | -327.68..327.67 | 0.01 | Heading (deg) |
+| 10-11 | roll | -327.68..327.67 | 0.01 | Roll (deg) |
+| 12-13 | pitch | -327.68..327.67 | 0.01 | Pitch (deg) |
 
 #### Radio Message (0x30)
 
 Commands being sent by the radio controller.
 
-```
+``` cpp
 typedef struct {
-	s16 speed;
-	u8 steering;
-}RadioMsg_t;
+    float speed;
+    uint8_t steering;
+} RadioMsg_t;
 ```
 
-| Byte Offset | Name | Description | 
-| ------------ | ------------- | ------------- |
-| 4-5 | speed | Speed command from radio controller (mph) * 100 |
-| 6 | steering | Steering value from radio controller |
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-5 | speed | -327.68..327.67 | 0.01 | Speed command from radio controller (mph) |
+| 6 | steering | 0..256 | 1 | TBD |
 
-#### IMU Message (0x40)
+#### StampedRadio Message (0x3A)
+
+Commands being sent by the radio controller.
+
+``` cpp
+typedef struct {
+    uint32_t timestamp;
+    float speed;
+    uint8_t steering;
+} StampedRadioMsg_t;
+```
+
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-7 | timestamp | 0..4294967296 | 1 | Arduino time (ms) when the message was created |
+| 8-9 | speed | -327.68..327.67 | 0.01 | Speed command from radio controller (mph) |
+| 10 | steering | 0..256 | 1 | TBD |
+
+#### Imu Message (0x40)
 
 Measurement information being privided by the IMU sensor.
 
-```
+``` cpp
 typedef struct {
-	s16 euler_x;
-	s16 euler_y;
-	s16 euler_z;
-	s16 acc_x;
-	s16 acc_y;
-	s16 acc_z;
-	s16 gyro_x;
-	s16 gyro_y;
-	s16 gyro_z;	
-}ImuMsg_t;
+    float eulerX;
+    float eulerY;
+    float eulerZ;
+    float accX;
+    float accY;
+    float accZ;
+    float gyroX;
+    float gyroY;
+    float gyroZ;
+    float quaternionW;
+    float quaternionX;
+    float quaternionY;
+    float quaternionZ;
+} ImuMsg_t;
 ```
 
-| Byte Offset | Name | Description | 
-| ------------ | ------------- | ------------- |
-| 4-5 | euler_x | Euler angle on the X axis (rad)  * 10430, range -32767..32767 representing -pi to pi |
-| 6-7 | euler_y | Euler angle on the Y axis (rad)  * 10430, range -32767..32767 representing -pi to pi |
-| 8-9 | euler_z | Euler angle on the Z axis (rad)  * 10430, range -32767..32767 representing -pi to pi |
-| 10-11 | acc_x | Acceleration on the X axis (g)  * 8192, range -32768..32767 representing -4 to 4 |
-| 12-13 | acc_y | Acceleration angle on the Y axis (g)  * 8192, range -32768..32767 representing -4 to 4 |
-| 14-15 | acc_z | Acceleration angle on the Z axis (g)  * 8192, range -32768..32767 representing -4 to 4 |
-| 16-17 | gyro_x | Rotation rate on the X axis (deg/s)  * 16.4, range -32768..32767 representing -2000 to 2000 |
-| 18-19 | gyro_y | Rotation rate angle on the Y axis (deg/s)  * 16.4, range -32768..32767 representing -2000 to 2000 |
-| 20-21 | gyro_z | Rotation rate angle on the Z axis (deg/s)  * 16.4, range -32768..32767 representing -2000 to 2000 |
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-5 | euler_x | -3.14171..3.14161 | 9.59e-05 | Euler angle on the X axis (rad) |
+| 6-7 | euler_y | -3.14171..3.14161 | 9.59e-05 | Euler angle on the Y axis (rad) |
+| 8-9 | euler_z | -3.14171..3.14161 | 9.59e-05 | Euler angle on the Z axis (rad) |
+| 10-11 | acc_x | -4.0..3.99988 | 0.000122 | Acceleration on the X axis (g) |
+| 12-13 | acc_y | -4.0..3.99988 | 0.000122 | Acceleration on the Y axis (g) |
+| 14-15 | acc_z | -4.0..3.99988 | 0.000122 | Acceleration on the Z axis (g) |
+| 16-17 | gyro_x | -1998.05..1997.99 | 0.061 | Rotation rate on the X axis (deg/s) |
+| 18-19 | gyro_y | -1998.05..1997.99 | 0.061 | Rotation rate on the Y axis (deg/s) |
+| 20-21 | gyro_z | -1998.05..1997.99 | 0.061 | Rotation rate on the Z axis (deg/s) |
+| 22-23 | quaternion_w | -2.0..1.99994 | 6.1e-05 | W value of the quaternion matrix |
+| 24-25 | quaternion_x | -2.0..1.99994 | 6.1e-05 | X value of the quaternion matrix |
+| 26-27 | quaternion_y | -2.0..1.99994 | 6.1e-05 | Y value of the quaternion matrix |
+| 28-29 | quaternion_z | -2.0..1.99994 | 6.1e-05 | Z value of the quaternion matrix |
+
+#### StampedImu Message (0x4A)
+
+Measurement information being privided by the IMU sensor.
+
+``` cpp
+typedef struct {
+    uint32_t timestamp;
+    float eulerX;
+    float eulerY;
+    float eulerZ;
+    float accX;
+    float accY;
+    float accZ;
+    float gyroX;
+    float gyroY;
+    float gyroZ;
+    float quaternionW;
+    float quaternionX;
+    float quaternionY;
+    float quaternionZ;
+} StampedImuMsg_t;
+```
+
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-7 | timestamp | 0..4294967296 | 1 | Arduino time (ms) when the message was created |
+| 8-9 | euler_x | -3.14171..3.14161 | 9.59e-05 | Euler angle on the X axis (rad) |
+| 10-11 | euler_y | -3.14171..3.14161 | 9.59e-05 | Euler angle on the Y axis (rad) |
+| 12-13 | euler_z | -3.14171..3.14161 | 9.59e-05 | Euler angle on the Z axis (rad) |
+| 14-15 | acc_x | -4.0..3.99988 | 0.000122 | Acceleration on the X axis (g) |
+| 16-17 | acc_y | -4.0..3.99988 | 0.000122 | Acceleration on the Y axis (g) |
+| 18-19 | acc_z | -4.0..3.99988 | 0.000122 | Acceleration on the Z axis (g) |
+| 20-21 | gyro_x | -1998.05..1997.99 | 0.061 | Rotation rate on the X axis (deg/s) |
+| 22-23 | gyro_y | -1998.05..1997.99 | 0.061 | Rotation rate on the Y axis (deg/s) |
+| 24-25 | gyro_z | -1998.05..1997.99 | 0.061 | Rotation rate on the Z axis (deg/s) |
+| 26-27 | quaternion_w | -2.0..1.99994 | 6.1e-05 | W value of the quaternion matrix |
+| 28-29 | quaternion_x | -2.0..1.99994 | 6.1e-05 | X value of the quaternion matrix |
+| 30-31 | quaternion_y | -2.0..1.99994 | 6.1e-05 | Y value of the quaternion matrix |
+| 32-33 | quaternion_z | -2.0..1.99994 | 6.1e-05 | Z value of the quaternion matrix |
 
 #### Sonar Message (0x41)
 
 Measurement information being provided by the sonar ring.
 
-```
+``` cpp
 typedef struct {
-	u16 ping1;
-	u16 ping2;
-	u16 ping3;
-	u16 ping4;
-	u16 ping5;
-}SonarMsg_t;
+    int16_t ping1;
+    int16_t ping2;
+    int16_t ping3;
+    int16_t ping4;
+    int16_t ping5;
+} SonarMsg_t;
 ```
 
-| Byte Offset | Name | Description | 
-| ------------ | ------------- | ------------- |
-| 4-5 | ping1 | Echo time in microseconds |
-| 6-7 | ping2 | Echo time in microseconds |
-| 8-9 | ping3 | Echo time in microseconds |
-| 10-11 | ping4 | Echo time in microseconds |
-| 12-13 | ping5 | Echo time in microseconds |
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-5 | ping1 | -32768..32767 | 1 | Echo time in microseconds |
+| 6-7 | ping2 | -32768..32767 | 1 | Echo time in microseconds |
+| 8-9 | ping3 | -32768..32767 | 1 | Echo time in microseconds |
+| 10-11 | ping4 | -32768..32767 | 1 | Echo time in microseconds |
+| 12-13 | ping5 | -32768..32767 | 1 | Echo time in microseconds |
+
+#### StampedSonar Message (0x4B)
+
+Measurement information being provided by the sonar ring.
+
+``` cpp
+typedef struct {
+    uint32_t timestamp;
+    int16_t ping1;
+    int16_t ping2;
+    int16_t ping3;
+    int16_t ping4;
+    int16_t ping5;
+} StampedSonarMsg_t;
+```
+
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-7 | timestamp | 0..4294967296 | 1 | Arduino time (ms) when the message was created |
+| 8-9 | ping1 | -32768..32767 | 1 | Echo time in microseconds |
+| 10-11 | ping2 | -32768..32767 | 1 | Echo time in microseconds |
+| 12-13 | ping3 | -32768..32767 | 1 | Echo time in microseconds |
+| 14-15 | ping4 | -32768..32767 | 1 | Echo time in microseconds |
+| 16-17 | ping5 | -32768..32767 | 1 | Echo time in microseconds |
 
 #### Bumper Message (0x42)
 
-TBD
+Measurement information being provided by the bump sensors.
+
+``` cpp
+typedef struct {
+    int8_t left;
+    int8_t right;
+} BumperMsg_t;
+```
+
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4 | left | -128..127 | 1 | TBD |
+| 5 | right | -128..127 | 1 | TBD |
+
+#### StampedBumper Message (0x4C)
+
+Measurement information being provided by the bump sensors.
+
+``` cpp
+typedef struct {
+    uint32_t timestamp;
+    int8_t left;
+    int8_t right;
+} StampedBumperMsg_t;
+```
+
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-7 | timestamp | 0..4294967296 | 1 | Arduino time (ms) when the message was created |
+| 8 | left | -128..127 | 1 | TBD |
+| 9 | right | -128..127 | 1 | TBD |
 
 #### State Message (0x60)
 
-Current rover state information
+Current rover state information.
 
-```
+``` cpp
 typedef struct {
-	u8 apmState;
-	u8 driveState;
-	u8 autoState;
-	u8 autoFlag;
-	u8 voltage;
-	u8 amperage;
-	u8 groundSpeed;
-}StateMsg_t;
+    uint8_t apmState;
+    uint8_t driveState;
+    uint8_t autoState;
+    uint8_t autoFlag;
+    float voltage;
+    float amperage;
+    float groundSpeed;
+} StateMsg_t;
 ```
 
-| Byte Offset | Name | Description | 
-| ------------ | ------------- | ------------- |
-| 4 | apmState | Maps [Invalid, Init, Self-test, Drive] to [0,1,2,3] |
-| 5 | driveState | Maps [Invalid, Stop, Auto, Radio] to [0,1,2,3] |
-| 6 | autoState | Maps [Invalid, Full, Avoid, Stalled] to [0,1,2,3] |
-| 7 | autoFlag | Maps [None, Caution, Approach] to [0,1,2] |
-| 8 | voltage | Current battery voltage * 10 (volts) |
-| 9 | amperage | Current amperage draw on battery * 10 (amps) |
-| 8 | groundSpeed | Current speed of rover * 10 (mph) |
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4 | apmState | 0..256 | 1 | Maps [Invalid, Init, Self-test, Drive] to [0, 1, 2, 3] |
+| 5 | driveState | 0..256 | 1 | Maps [Invalid, Stop, Auto, Radio] to [0, 1, 2, 3] |
+| 6 | autoState | 0..256 | 1 | Maps [Invalid, Full, Avoid, Stalled] to [0, 1, 2, 3] |
+| 7 | autoFlag | 0..256 | 1 | Maps [None, Caution, Approach] to [0, 1, 2] |
+| 8 | voltage | 0.0..25.6 | 0.1 | Current battery voltage (volts) |
+| 9 | amperage | 0.0..25.6 | 0.1 | Current amperage draw on battery (amps) |
+| 10 | groundSpeed | 0.0..25.6 | 0.1 | Current speed of rover (mph) |
 
-#### Configuration Message (0x70)
+#### StampedState Message (0x6A)
 
-TBD
+Current rover state information.
+
+``` cpp
+typedef struct {
+    uint32_t timestamp;
+    uint8_t apmState;
+    uint8_t driveState;
+    uint8_t autoState;
+    uint8_t autoFlag;
+    float voltage;
+    float amperage;
+    float groundSpeed;
+} StampedStateMsg_t;
+```
+
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-7 | timestamp | 0..4294967296 | 1 | Arduino time (ms) when the message was created |
+| 8 | apmState | 0..256 | 1 | Maps [Invalid, Init, Self-test, Drive] to [0, 1, 2, 3] |
+| 9 | driveState | 0..256 | 1 | Maps [Invalid, Stop, Auto, Radio] to [0, 1, 2, 3] |
+| 10 | autoState | 0..256 | 1 | Maps [Invalid, Full, Avoid, Stalled] to [0, 1, 2, 3] |
+| 11 | autoFlag | 0..256 | 1 | Maps [None, Caution, Approach] to [0, 1, 2] |
+| 12 | voltage | 0.0..25.6 | 0.1 | Current battery voltage (volts) |
+| 13 | amperage | 0.0..25.6 | 0.1 | Current amperage draw on battery (amps) |
+| 14 | groundSpeed | 0.0..25.6 | 0.1 | Current speed of rover (mph) |
 
 #### Control Message (0x80)
 
 Rover output control values.
 
-```
+``` cpp
 typedef struct {
-	s16 speed;
-	u8 steering;
-}ControlMsg_t;
+    float speed;
+    uint8_t steering;
+} ControlMsg_t;
 ```
 
-| Byte Offset | Name | Description | 
-| ------------ | ------------- | ------------- |
-| 4-5 | speed * 100 | speed setting sent to controller (mph) |
-| 6 | steering | steering angle sent to controller (angle, 90 = no turn angle) |
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-5 | speed | -327.68..327.67 | 0.01 | Speed setting sent to controller (mph) |
+| 6 | steering | 0..256 | 1 | Steering angle sent to controller (centered at 90 degrees) |
+
+#### StampedControl Message (0x8A)
+
+Rover output control values.
+
+``` cpp
+typedef struct {
+    uint32_t timestamp;
+    float speed;
+    uint8_t steering;
+} StampedControlMsg_t;
+```
+
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-7 | timestamp | 0..4294967296 | 1 | Arduino time (ms) when the message was created |
+| 8-9 | speed | -327.68..327.67 | 0.01 | Speed setting sent to controller (mph) |
+| 10 | steering | 0..256 | 1 | Steering angle sent to controller (centered at 90 degrees) |
 
 #### Waypoint Message (0x81)
 
 Variables used to calculate control for waypoint navigation.
 
-```
+``` cpp
 typedef struct {
-	GpsAngle_t latStart;
-	GpsAngle_t lonStart;
-	GpsAngle_t latIntermediate;
-	GpsAngle_t lonIntermediate;
-	GpsAngle_t latTarget;
-	GpsAngle_t lonTarget;
-	s16 pathHeading;
-}WaypointMsg_t;
+    GpsAngle_t latStart;
+    GpsAngle_t lonStart;
+    GpsAngle_t latIntermediate;
+    GpsAngle_t lonIntermediate;
+    GpsAngle_t latTarget;
+    GpsAngle_t lonTarget;
+    float pathHeading;
+} WaypointMsg_t;
 ```
 
-| Byte Offset | Name | Description | 
-| ------------ | ------------- | ------------- |
-| 4-5 | latStart_minutes | Previous waypoint latitude used for creating path (degrees and nondecimal minutes).  Specifically DDDMM of the DDDMM.MMMMM NMEA string |
-| 6-9 | latStart_frac | Previous waypoint latitude used for creating path (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
-| 10-11 | lonStart_minutes | Previous waypoint longitude used for creating path (degrees and nondecimal minutes).  Specifically DDDMM of the DDDMM.MMMMM NMEA string |
-| 12-15 | lonStart_frac | Previous waypoint longitude used for creating path (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
-| 16-17 | latIntermediate_minutes | Temporary target latitude calculated by line gravity (degrees and nondecimal minutes).  Specifically DDDMM of the DDDMM.MMMMM NMEA string |
-| 18-21 | latIntermediate_frac | Temporary target latitude calculated by line gravity (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
-| 22-23 | lonIntermediate_minutes | Temporary target longitude calculated by line gravity (degrees and nondecimal minutes).  Specifically DDDMM of the DDDMM.MMMMM NMEA string |
-| 24-27 | lonIntermediate_frac | Temporary target longitude calculated by line gravity (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
-| 28-29 | latTarget_minutes | Current goal waypoint latitude.  Specifically DDDMM of the DDDMM.MMMMM NMEA string |
-| 30-33 | latTarget_frac | Current goal waypoint latitude. Specifically MMMMM of the DDDMM.MMMMM NMEA string |
-| 34-35 | lonTarget_minutes | Current goal waypoint longitude (degrees and nondecimal minutes).  Specifically DDDMM of the DDDMM.MMMMM NMEA string |
-| 36-39 | lonTarget_frac | Current goal waypoint longitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
-| 40-41 | pathHeading | Desired heading * 100 deg, range -18000..18000 representing -180.00 to 180.00 |
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-5 | lat_start.minutes | -32768..32767 | 1 | Previous waypoint latitude used for creating path (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 6-9 | lat_start.frac | -21474.8..21474.8 | 1e-05 | Previous waypoint latitude used for creating path (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 10-11 | lon_start.minutes | -32768..32767 | 1 | Previous waypoint longitude used for creating path (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 12-15 | lon_start.frac | -21474.8..21474.8 | 1e-05 | Previous waypoint longitude used for creating path (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 16-17 | lat_intermediate.minutes | -32768..32767 | 1 | Temporary target latitude calculated by line gravity (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 18-21 | lat_intermediate.frac | -21474.8..21474.8 | 1e-05 | Temporary target latitude calculated by line gravity (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 22-23 | lon_intermediate.minutes | -32768..32767 | 1 | Temporary target longitude calculated by line gravity (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 24-27 | lon_intermediate.frac | -21474.8..21474.8 | 1e-05 | Temporary target longitude calculated by line gravity (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 28-29 | lat_target.minutes | -32768..32767 | 1 | Current goal waypoint latitude (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 30-33 | lat_target.frac | -21474.8..21474.8 | 1e-05 | Current goal waypoint latitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 34-35 | lon_target.minutes | -32768..32767 | 1 | Current goal waypoint longitude (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 36-39 | lon_target.frac | -21474.8..21474.8 | 1e-05 | Current goal waypoint longitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 40-41 | path_heading | -327.68..327.67 | 0.01 | Desired heading (deg) |
 
-#### ASCII Message (0x90)
+#### StampedWaypoint Message (0x8B)
 
-A method for sending ASCII messages.  These should only be used for active debugging and should be removed before committing to the repository.
+Variables used to calculate control for waypoint navigation.
 
+``` cpp
+typedef struct {
+    uint32_t timestamp;
+    GpsAngle_t latStart;
+    GpsAngle_t lonStart;
+    GpsAngle_t latIntermediate;
+    GpsAngle_t lonIntermediate;
+    GpsAngle_t latTarget;
+    GpsAngle_t lonTarget;
+    float pathHeading;
+} StampedWaypointMsg_t;
 ```
+
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-7 | timestamp | 0..4294967296 | 1 | Arduino time (ms) when the message was created |
+| 8-9 | lat_start.minutes | -32768..32767 | 1 | Previous waypoint latitude used for creating path (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 10-13 | lat_start.frac | -21474.8..21474.8 | 1e-05 | Previous waypoint latitude used for creating path (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 14-15 | lon_start.minutes | -32768..32767 | 1 | Previous waypoint longitude used for creating path (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 16-19 | lon_start.frac | -21474.8..21474.8 | 1e-05 | Previous waypoint longitude used for creating path (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 20-21 | lat_intermediate.minutes | -32768..32767 | 1 | Temporary target latitude calculated by line gravity (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 22-25 | lat_intermediate.frac | -21474.8..21474.8 | 1e-05 | Temporary target latitude calculated by line gravity (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 26-27 | lon_intermediate.minutes | -32768..32767 | 1 | Temporary target longitude calculated by line gravity (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 28-31 | lon_intermediate.frac | -21474.8..21474.8 | 1e-05 | Temporary target longitude calculated by line gravity (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 32-33 | lat_target.minutes | -32768..32767 | 1 | Current goal waypoint latitude (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 34-37 | lat_target.frac | -21474.8..21474.8 | 1e-05 | Current goal waypoint latitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 38-39 | lon_target.minutes | -32768..32767 | 1 | Current goal waypoint longitude (degrees and nondecimal minutes). Specifically DDDMM of the DDDMM.MMMMM NMEA string |
+| 40-43 | lon_target.frac | -21474.8..21474.8 | 1e-05 | Current goal waypoint longitude (decimal minutes). Specifically MMMMM of the DDDMM.MMMMM NMEA string |
+| 44-45 | path_heading | -327.68..327.67 | 0.01 | Desired heading (deg) |
+
+#### SteeringController Message (0x82)
+
+Debug output for steering controller
+
+``` cpp
+typedef struct {
+    float scSteering;
+    float trueSteering;
+    float kCrosstrack;
+    float kYaw;
+    float headingError;
+    float crosstrackError;
+} SteeringControllerMsg_t;
+```
+
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-5 | sc_steering | -327.68..327.67 | 0.01 | Steering controller output angle (deg) (ccw: + cw: -) |
+| 6-7 | true_steering | -327.68..327.67 | 0.01 | Platform specific steering angle (deg) (centered at 90 degrees) |
+| 8-9 | k_crosstrack | -32.768..32.767 | 0.001 | Crosstrack error gain value |
+| 10-11 | k_yaw | -32.768..32.767 | 0.001 | Yaw error gain value |
+| 12-13 | heading_error | -327.68..327.67 | 0.01 | Heading error (deg) |
+| 14-15 | crosstrack_error | -327.68..327.67 | 0.01 | Crosstrack error (m) |
+
+#### StampedSteeringController Message (0x8C)
+
+Debug output for steering controller
+
+``` cpp
+typedef struct {
+    uint32_t timestamp;
+    float scSteering;
+    float trueSteering;
+    float kCrosstrack;
+    float kYaw;
+    float headingError;
+    float crosstrackError;
+} StampedSteeringControllerMsg_t;
+```
+
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-7 | timestamp | 0..4294967296 | 1 | Arduino time (ms) when the message was created |
+| 8-9 | sc_steering | -327.68..327.67 | 0.01 | Steering controller output angle (deg) (ccw: + cw: -) |
+| 10-11 | true_steering | -327.68..327.67 | 0.01 | Platform specific steering angle (deg) (centered at 90 degrees) |
+| 12-13 | k_crosstrack | -32.768..32.767 | 0.001 | Crosstrack error gain value |
+| 14-15 | k_yaw | -32.768..32.767 | 0.001 | Yaw error gain value |
+| 16-17 | heading_error | -327.68..327.67 | 0.01 | Heading error (deg) |
+| 18-19 | crosstrack_error | -327.68..327.67 | 0.01 | Crosstrack error (m) |
+
+#### Version Message (0xA0)
+
+Version information.
+
+``` cpp
+typedef struct {
+    uint8_t debugMajor;
+    uint8_t debugMinor;
+    uint8_t apmMajor;
+    uint8_t apmMinor;
+} VersionMsg_t;
+```
+
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4 | debug_major | 0..256 | 1 | Major version of debug protocol |
+| 5 | debug_minor | 0..256 | 1 | Minor version of debug protocol |
+| 6 | apm_major | 0..256 | 1 | Major version of APM protocol |
+| 7 | apm_minor | 0..256 | 1 | Minor version of APM protocol |
+
+#### StampedVersion Message (0xAA)
+
+Version information.
+
+``` cpp
+typedef struct {
+    uint32_t timestamp;
+    uint8_t debugMajor;
+    uint8_t debugMinor;
+    uint8_t apmMajor;
+    uint8_t apmMinor;
+} StampedVersionMsg_t;
+```
+
+| Byte Offset | Name | Range | Resolution | Description |
+| ------------ | ------------- | ------------- | ------------- | ------------- |
+| 4-7 | timestamp | 0..4294967296 | 1 | Arduino time (ms) when the message was created |
+| 8 | debug_major | 0..256 | 1 | Major version of debug protocol |
+| 9 | debug_minor | 0..256 | 1 | Minor version of debug protocol |
+| 10 | apm_major | 0..256 | 1 | Major version of APM protocol |
+| 11 | apm_minor | 0..256 | 1 | Minor version of APM protocol |
+
+
+#### Ascii Message (0x90)
+
+A method for sending ASCII messages. These should only be used for active debugging and should be removed before committing to the repository.
+
+``` cpp
 typedef struct {
 	LenString_t ascii
-}AsciiMsg_t;
+} AsciiMsg_t;
 ```
 
 | Byte Offset | Name | Description | 
@@ -323,32 +799,12 @@ typedef struct {
 | 4-? | LenString_t | Struct of ASCII characters for temporary debugging msgs |
 
 Example:
-```
+``` cpp
 #ifdef M_DEBUG
 	AsciiMsg_t msg;
 	String tst = "ASCII MSG Here";
 	msg.ascii.len = tst.length();
-	tst.toCharArray(msg.ascii.data,tst.length()+1);
+	tst.toCharArray(msg.ascii.data, tst.length() + 1);
 	debugger.send(msg);
 #endif
 ```
-
-#### Version Message (0xA0)
-
-Version information
-
-```
-typedef struct {
-	u8 debug_major
-	u8 debug_minor
-	u8 apm_major
-	u8 apm_minor
-}AsciiMsg_t;
-```
-
-| Byte Offset | Name | Description | 
-| ------------ | ------------- | ------------- |
-| 4 | debug_major | Major version of debug protocol |
-| 5 | debug_minor | Minor version of debug protocol |
-| 6 | apm_major | Major version of amp protocol |
-| 7 | apm_minor | Minor version of amp protocol |
